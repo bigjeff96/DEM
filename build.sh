@@ -3,8 +3,6 @@
 ODIN=odin
 # ODIN_ROOT="/home/joseph/Dropbox/Projects/odin/Odin-dev-2023-02/Odin-dev-2023-02/"
 
-ARGS="5.4 Data/test_k/1/"
-
 set -e
 $ODIN run . -o:minimal -use-separate-modules  -show-timings -no-bounds-check -define:DEFAULT_TEMP_ALLOCATOR_BACKING_SIZE=20_000_000 
 # $ODIN check .
