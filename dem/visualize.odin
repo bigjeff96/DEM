@@ -116,7 +116,8 @@ visualize_experiment :: proc(experiment: ^Experiment) {
     ctx.text_height = rl_text_height
     ctx.style.spacing += 5
     experiment_frame: int
-    cells := experiment.cells // Doesn't change every frame
+    using experiment
+    using cell_context
     {
 	for cell in &cells {
 	    clear(&cell.particle_ids)
@@ -139,7 +140,6 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 
 	spheres := experiment.data[experiment_frame].spheres
 	walls := experiment.data[experiment_frame].walls
-	total_cells_along := cells[0].total_cells_along
 	Total_time = experiment.data[experiment_frame].current_time
 
 	if experiment_frame == 0 do for _ in 0 ..< len(spheres) do append(&old_angles, 0.)
@@ -236,9 +236,9 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 		using physics_opts
 		using selected_sphere := spheres[id_selected_sphere]
 
-		cell_id := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
-		neighbor_ids := get_real_neighbor_cell_ids(cells[:], cell_id, experiment.experiment_type)
-		render_cells(cells[:], neighbor_ids[:], walls)
+		cell_id := position_to_cell_id(position, cell_context, walls)
+		neighbor_ids := get_real_neighbor_cell_ids(cell_context, cell_id, experiment.experiment_type)
+		render_cells(cell_context, neighbor_ids[:], walls)
 
 		{ 	// get neighbor particle ids
 		    for neighbor_id in neighbor_ids {
@@ -452,7 +452,9 @@ debug_sim_code :: proc() {
     fmt.printf("dt is %.10f\n", params.dt)
 
     walls := init_walls(length_box, 2 * radius)
-    cells := init_cells(radius, walls)
+    cell_context := init_cell_context(radius, walls)
+    using cell_context
+    using info
     contacts: map[int]Contact
     //make spheres
     spheres: [dynamic]Sphere
@@ -503,7 +505,7 @@ debug_sim_code :: proc() {
 	    }
 	    if !pause {
 		for _ in 0 ..< sim_speed {
-		    physics_update_chain(chains[:], spheres[:], cells, walls, &contacts, params)
+		    physics_update_chain(chains[:], spheres[:], cell_context, walls, &contacts, params)
 		    /* spheres[0].position = walls[SIDE_WALL_ID].center_position + spheres[0].radius * walls[SIDE_WALL_ID].normal  */
 		    /* spheres[0].velocity = 0 */
 		    /* spheres[0].angular_velocity = 0 */
@@ -569,7 +571,6 @@ debug_sim_code :: proc() {
 	{ 	// 3D stuff
 	    BeginMode3D(camera)
 	    defer EndMode3D()
-	    total_cells_along := cells[0].total_cells_along
 
 	    render_chains(chains[:], physics_opts.id_selected_sphere, old_angles[:], &render_state)
 	    /* render_spheres(spheres[:], physics_opts.id_selected_sphere, old_angles[:], &render_state) */
@@ -592,9 +593,9 @@ debug_sim_code :: proc() {
 		using physics_opts
 		using selected_sphere := spheres[id_selected_sphere]
 
-		cell_id := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
-		neighbor_ids := get_real_neighbor_cell_ids(cells[:], cell_id, .nothing)
-		render_cells(cells[:], neighbor_ids[:], walls)
+		cell_id := position_to_cell_id(position, cell_context, walls)
+		neighbor_ids := get_real_neighbor_cell_ids(cell_context, cell_id, .nothing)
+		render_cells(cell_context, neighbor_ids[:], walls)
 
 		{ 	// get neighbor particle ids
 		    for neighbor_id in neighbor_ids {
@@ -865,13 +866,13 @@ sphere_is_selected :: proc(mouse_ray: rl.Ray, scaling_factor: f64, spheres: []Sp
     return result
 }
 
-render_all_cells :: proc(cells: []Cell, walls: []Wall) {
+render_all_cells :: proc(cell_context: ^Cell_context, walls: []Wall) {
+    using cell_context
+    using info
     using rl
-    total_cells_along := cells[0].total_cells_along
-    cell_length := cells[0].cell_length
     for _, id in cells {
 	DrawCubeWires(
-	    position = vec3_to_rl(cell_coords_unique_id(id, total_cells_along, walls, cell_length / 2)) * f32(SCALING_FACTOR),
+	    position = vec3_to_rl(cell_coords_unique_id(id, cell_context, walls)) * f32(SCALING_FACTOR),
 	    width = auto_cast (cell_length * SCALING_FACTOR),
 	    height = auto_cast (cell_length * SCALING_FACTOR),
 	    length = auto_cast (cell_length * SCALING_FACTOR),
@@ -880,13 +881,13 @@ render_all_cells :: proc(cells: []Cell, walls: []Wall) {
     }
 }
 
-render_cells :: proc(cells: []Cell, cell_ids: []int, walls: []Wall) {
+render_cells :: proc(cell_context: ^Cell_context, cell_ids: []int, walls: []Wall) {
     using rl
-    total_cells_along := cells[0].total_cells_along
-    cell_length := cells[0].cell_length
+    using cell_context
+    using info
     for neighbor_id in cell_ids do if neighbor_id != 0 {
 	DrawCubeWires(
-	    position = vec3_to_rl(cell_coords_unique_id(neighbor_id, total_cells_along, walls, cell_length / 2)) *
+	    position = vec3_to_rl(cell_coords_unique_id(neighbor_id, cell_context, walls)) *
 		f32(SCALING_FACTOR),
 	    width = auto_cast (cell_length * SCALING_FACTOR),
 	    height = auto_cast (cell_length * SCALING_FACTOR),
@@ -895,12 +896,12 @@ render_cells :: proc(cells: []Cell, cell_ids: []int, walls: []Wall) {
     }
 }
 
-render_cell :: proc(cells: []Cell, cell_id: int, walls: []Wall, color: rl.Color) {
+render_cell :: proc(cell_context: ^Cell_context, cell_id: int, walls: []Wall, color: rl.Color) {
     using rl
-    total_cells_along := cells[0].total_cells_along
-    cell_length := cells[0].cell_length
+    using cell_context
+    using info
     DrawCube(
-	position = vec3_to_rl(cell_coords_unique_id(cell_id, total_cells_along, walls, cell_length / 2)) *
+	position = vec3_to_rl(cell_coords_unique_id(cell_id,cell_context, walls)) *
 	    f32(SCALING_FACTOR),
 	width = auto_cast (cell_length * SCALING_FACTOR),
 	height = auto_cast (cell_length * SCALING_FACTOR),

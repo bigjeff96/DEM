@@ -41,12 +41,13 @@ delta_study :: proc(sim_directory: string) {
     read_experiment(sim_directory, results)
 
     data := results.data
-    cells := results.cells
+    cell_context := results.cell_context
     deltas := new([dynamic]f64)
+    using cell_context
+    using info
 
     for sim_state, sim_state_id in data {
 	walls := sim_state.walls
-	total_cells_along := cells[0].total_cells_along
 	spheres := sim_state.spheres
 
 	length_box_x := length(walls[1].center_position - walls[0].center_position)
@@ -59,13 +60,13 @@ delta_study :: proc(sim_directory: string) {
 	}
 	for sphere, sphere_id in spheres {
 	    using sphere
-	    id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	    id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	    append(&cells[id_cell_of_particle].particle_ids, sphere_id)
 	}
 
 	for sphere, sphere_id in &spheres {
 	    using sphere
-	    id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	    id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	    cell_of_particle := cells[id_cell_of_particle]
 
 	    // For it to work like the linked list ( like a stack, last in first out)
@@ -130,7 +131,7 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
     fmt.printf("dt = %.10f\n", dt)
 
     walls := init_walls(length_box, 2 * radius)
-    cells := init_cells(radius, walls)
+    cell_context := init_cell_context(radius, walls)
     spheres: [dynamic]Sphere
     contacts: map[int]Contact
 
@@ -169,7 +170,7 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
     file_id: int
     if dump_results {
 	os.make_directory(directory)
-	dump_cells(cells[:], directory)
+	dump_cell_context(cell_context, directory)
     }
 
     period_shaker_steps := (f64(1. / shaker_frequency) / dt)
@@ -188,7 +189,7 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
 	file_id += 1
 
 	for i in 0 ..< frame_duration_steps {
-	    physics_update(spheres[:], cells[:], walls[:], &contacts, false, params)
+	    physics_update(spheres[:], cell_context, walls[:], &contacts, false, params)
 	    thing_to_compare := period_shaker_steps if flip_flop else waiting_time / dt
 
 	    if current_shaker_step < thing_to_compare {

@@ -46,16 +46,18 @@ SIDE_WALL_ID :: 4
 
 physics_update :: proc(
     spheres: []Sphere,
-    cells: []Cell,
+    cell_context: ^Cell_context,
     walls: []Wall,
     contacts: ^map[int]Contact,
     is_periodic: bool,
     params: Params,
 ) {
     using rl, params
+    using cell_context
+    using info
     // for looping over slices
     spheres := spheres
-    cells := cells
+    /* cells := cells */
     walls := walls
 
     length_box := get_length_box(walls)
@@ -63,7 +65,6 @@ physics_update :: proc(
     @(static)
     current_time: f64 = 0
     defer current_time += dt
-    total_cells_along := cells[0].total_cells_along
 
     // clear particles in cells
     for cell in &cells {
@@ -82,7 +83,7 @@ physics_update :: proc(
 	force = -e_y * mass * G
 	torque = 0
 
-	id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	append(&cells[id_cell_of_particle].particle_ids, sphere_id)
     }
 
@@ -90,7 +91,7 @@ physics_update :: proc(
     for sphere, sphere_id in &spheres {
 	using sphere
 
-	id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	cell_of_particle := cells[id_cell_of_particle]
 
 	// For it to work like the linked list ( like a stack, last in first out)
@@ -255,16 +256,17 @@ physics_update :: proc(
 physics_update_chain :: proc(
     chains: []Chain,
     spheres: []Sphere,
-    cells: []Cell,
+    cell_context: ^Cell_context,
     walls: []Wall,
     contacts: ^map[int]Contact,
     params: Params,
     is_periodic: bool = false,
 ) {
     using rl, params
+    using cell_context
+    using info
     chains := chains
     spheres := spheres
-    cells := cells
     walls := walls
 
     length_box := get_length_box(walls)
@@ -272,7 +274,6 @@ physics_update_chain :: proc(
     @(static)
     current_time: f64 = 0
     defer current_time += dt
-    total_cells_along := cells[0].total_cells_along
 
     // clear particles in cells
     for cell in &cells {
@@ -291,7 +292,7 @@ physics_update_chain :: proc(
 	force = -e_y * mass * G
 	torque = 0
 
-	id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	append(&cells[id_cell_of_particle].particle_ids, sphere_id)
     }
 
@@ -299,7 +300,7 @@ physics_update_chain :: proc(
     for sphere, sphere_id in &spheres {
 	using sphere
 
-	id_cell_of_particle := position_to_cell_id(position, cells[0].cell_length / 2, total_cells_along, length_box, walls)
+	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
 	cell_of_particle := cells[id_cell_of_particle]
 
 	// For it to work like the linked list ( like a stack, last in first out)
@@ -425,18 +426,18 @@ init_walls :: proc(length_box: [3]f64, diameter: f64) -> []Wall {
 }
 
 
-walls_next_to_cell_init :: proc(close_walls: ^[dynamic]Wall, walls: []Wall, cell: ^Cell) {
+/* walls_next_to_cell_init :: proc(close_walls: ^[dynamic]Wall, walls: []Wall, cell: ^Cell, cell_context: ^Cell_context) { */
 
-    i, j, k := indices_from_unique_id(cell.id, cell.total_cells_along)
+/*     i, j, k := indices_from_unique_id(cell.id, cell_context) */
 
-    using cell
-    if i == 0 do append(close_walls, walls[0])
-    if i == total_cells_along.x - 1 do append(close_walls, walls[1])
-    if j == 0 do append(close_walls, walls[2])
-    if j == total_cells_along.y - 1 do append(close_walls, walls[3])
-    if k == 0 do append(close_walls, walls[4])
-    if k == total_cells_along.z - 1 do append(close_walls, walls[5])
-}
+/*     using cell_context */
+/*     if i == 0 do append(close_walls, walls[0]) */
+/*     if i == total_cells_along.x - 1 do append(close_walls, walls[1]) */
+/*     if j == 0 do append(close_walls, walls[2]) */
+/*     if j == total_cells_along.y - 1 do append(close_walls, walls[3]) */
+/*     if k == 0 do append(close_walls, walls[4]) */
+/*     if k == total_cells_along.z - 1 do append(close_walls, walls[5]) */
+/* } */
 
 
 measure_delta_spheres :: #force_inline proc(sphere, other_sphere: ^Sphere) -> (delta: f64) {

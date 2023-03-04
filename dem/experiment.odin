@@ -20,7 +20,7 @@ Experiment_type :: enum {
 
 Experiment :: struct {
     data:            []Simulation_state,
-    cells:           []Cell,
+    cell_context:    ^Cell_context,
     experiment_type: Experiment_type,
 }
 
@@ -124,7 +124,7 @@ read_experiment :: proc(directory: string, results: ^Experiment) {
 	if file_info.name[0] == '0' do total_sim_state_files += 1
     }
     // NOTE: shaker stuff is the last file and cells is the one before last
-    results.cells = read_cells(file_infos[index_cells].fullpath)
+    results.cell_context = read_cell_context(file_infos[index_cells].fullpath)
 
     data: [dynamic]Simulation_state
     for i in 0 ..< total_sim_state_files {
@@ -137,14 +137,34 @@ read_experiment :: proc(directory: string, results: ^Experiment) {
     results.data = data[:]
 }
 
-dump_cells :: proc(cells: []Cell, directory: string) {
-    cells := cells
+dump_cell_context :: proc(cell_context: ^Cell_context, directory: string) {
+    using cell_context
     file, ok := os.open(fmt.tprintf("%s%s", directory, "cells.dat"), os.O_RDWR | os.O_CREATE)
     defer os.close(file)
     assert(ok == os.ERROR_NONE)
 
+    // write cell info first
+    os.write_ptr(file, &cell_context.info, size_of(Cell_info))
+
     total_cells := len(cells)
     os.write_ptr(file, &total_cells, size_of(total_cells))
+
+    Cell :: struct {
+	particle_ids:    [dynamic]int, // holding the indices of the particles
+	neighbors:       [13]int, // also holding indices of neighbor cells
+	total_neighbors: int,
+	id:              int,
+    }
+
+    Cell_context :: struct {
+	info:  Cell_info,
+	cells: []Cell,
+    }
+
+    Cell_info :: struct {
+	total_cells_along: [3]int, // NOTE: number of cells along each axis of the box
+	cell_length:       f64,
+    }
 
     for cell in &cells {
 	total_particle_ids := len(cell.particle_ids)
@@ -155,39 +175,47 @@ dump_cells :: proc(cells: []Cell, directory: string) {
 	os.write_ptr(file, &cell.neighbors, size_of(cell.neighbors))
 	os.write_ptr(file, &cell.total_neighbors, size_of(cell.total_neighbors))
 	os.write_ptr(file, &cell.id, size_of(cell.id))
-	os.write_ptr(file, &cell.total_cells_along, size_of(cell.total_cells_along))
-	os.write_ptr(file, &cell.cell_length, size_of(cell.cell_length))
     }
 }
 
-read_cells :: proc(filename: string) -> []Cell {
+read_cell_context :: proc(filename: string) -> ^Cell_context {
     cells: [dynamic]Cell
     file, ok := os.open(filename, os.O_RDWR)
     defer os.close(file)
     assert(ok == os.ERROR_NONE)
 
+    cell_info: Cell_info
+    os.read_ptr(file, &cell_info, size_of(Cell_info))
+
     total_cells: int
     os.read_ptr(file, &total_cells, size_of(total_cells))
 
+    err: os.Errno
     for i in 0 ..< total_cells {
 	cell: Cell
 	total_particle_ids: int
 	os.read_ptr(file, &total_particle_ids, size_of(total_particle_ids))
 	for id in 0 ..< total_particle_ids {
 	    particle_id: int
-	    os.read_ptr(file, &particle_id, size_of(int))
+	    _, err = os.read_ptr(file, &particle_id, size_of(int))
+	    assert(err == os.ERROR_NONE)
 	    append(&cell.particle_ids, particle_id)
 	}
-	os.read_ptr(file, &cell.neighbors, size_of(cell.neighbors))
-	os.read_ptr(file, &cell.total_neighbors, size_of(cell.total_neighbors))
-	os.read_ptr(file, &cell.id, size_of(cell.id))
-	os.read_ptr(file, &cell.total_cells_along, size_of(cell.total_cells_along))
-	os.read_ptr(file, &cell.cell_length, size_of(cell.cell_length))
+	_, err = os.read_ptr(file, &cell.neighbors, size_of(cell.neighbors))
+	assert(err == os.ERROR_NONE)
+	_, err = os.read_ptr(file, &cell.total_neighbors, size_of(cell.total_neighbors))
+	assert(err == os.ERROR_NONE)
+	_, err = os.read_ptr(file, &cell.id, size_of(cell.id))
+	assert(err == os.ERROR_NONE)
 
 	append(&cells, cell)
     }
 
-    return cells[:]
+    cell_context := new(Cell_context)
+    cell_context.info = cell_info
+    cell_context.cells = cells[:]
+    
+    return cell_context
 }
 
 dump_sim_state :: proc(sim_state: ^Simulation_state, directory: string, id: int) {
