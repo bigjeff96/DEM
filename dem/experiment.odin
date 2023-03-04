@@ -137,6 +137,7 @@ read_experiment :: proc(directory: string, results: ^Experiment) {
     results.data = data[:]
 }
 
+@(warning = "Must check if it works, since cell_context change")
 dump_cell_context :: proc(cell_context: ^Cell_context, directory: string) {
     using cell_context
     file, ok := os.open(fmt.tprintf("%s%s", directory, "cells.dat"), os.O_RDWR | os.O_CREATE)
@@ -178,6 +179,7 @@ dump_cell_context :: proc(cell_context: ^Cell_context, directory: string) {
     }
 }
 
+@(warning = "Must check if it works, since cell_context change")
 read_cell_context :: proc(filename: string) -> ^Cell_context {
     cells: [dynamic]Cell
     file, ok := os.open(filename, os.O_RDWR)
