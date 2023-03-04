@@ -2,7 +2,6 @@ package compaction
 
 import "core:slice"
 import "core:strings"
-/* import "core:encoding/json" */
 import "core:fmt"
 import "core:os"
 import "core:math"
