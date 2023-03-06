@@ -269,6 +269,7 @@ physics_update_chain :: proc(
 
     @(static)
     current_time: f64 = 0
+    context.user_ptr = &current_time
     defer current_time += dt
 
     // clear particles in cells
