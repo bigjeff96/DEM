@@ -25,8 +25,8 @@ Sphere :: struct {
 // NOTE: this needs to represent both particle-particle collisions and particle-wall collisions
 Contact :: struct {
     time_last_update:    f64,
-    particle_id:         int,
-    particle_or_wall_id: int,
+    particle_id:         i32,
+    particle_or_wall_id: i32,
     delta_normal:        f64,
     friction_coeff:      f64,
     tangent_spring:      vec3,
@@ -518,8 +518,8 @@ update_contact :: proc(index: int, contacts: ^map[int]Contact, delta, current_ti
 
     // NOTE: This seems pretty stupid, feels like I don't need this
     sphere_id, other_id, other_is_wall := get_indices_from_hash(index)
-    contact.particle_id = sphere_id
-    contact.particle_or_wall_id = other_id
+    contact.particle_id = auto_cast sphere_id
+    contact.particle_or_wall_id = auto_cast other_id
     contact.other_is_wall = other_is_wall
 
     contacts[index] = contact
