@@ -37,7 +37,7 @@ Wall :: struct {
     center_position: vec3,
     normal:          vec3,
     velocity:        vec3,
-    id:              int,
+    id:              i32,
 }
 
 TOP_WALL_ID :: 3
@@ -83,7 +83,7 @@ physics_update :: proc(
 	torque = 0
 
 	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
-	append(&cells[id_cell_of_particle].particle_ids, sphere_id)
+	append(&cells[id_cell_of_particle].particle_ids, auto_cast sphere_id)
     }
 
     // find out new forces based on the new positions
@@ -97,12 +97,12 @@ physics_update :: proc(
 	slice.reverse(cell_of_particle.particle_ids[:])
 
 	// in the same cell
-	for id_other in cell_of_particle.particle_ids do if sphere_id < id_other {
+	for id_other in cell_of_particle.particle_ids do if i32(sphere_id) < id_other {
 	    delta: f64
 	    if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
 	    else do delta = measure_delta(&sphere, &spheres[id_other])
 	    if delta < 0 {
-		index := generate_hash(sphere_id = sphere_id, other_id = id_other, other_is_wall = false)
+		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = auto_cast id_other, other_is_wall = false)
 		update_contact(index, contacts, delta, current_time, params)
 	    }
 	}
@@ -117,7 +117,7 @@ physics_update :: proc(
 		else do delta = measure_delta(&sphere, &spheres[id_other])
 		
 		if delta < 0 {
-		    index := generate_hash(sphere_id = sphere_id, other_id = id_other, other_is_wall = false)
+		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
 		    update_contact(index, contacts, delta, current_time, params)
 		}
 	    }
@@ -126,10 +126,10 @@ physics_update :: proc(
 	for wall in &walls {
 	    delta := measure_delta(&sphere, &wall)
 	    if is_periodic && delta < 0 && wall.center_position.x == 0 {
-		index := generate_hash(sphere_id = sphere_id, other_id = wall.id, other_is_wall = true)
+		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
 		update_contact(index, contacts, delta, current_time, params)
 	    } else if delta < 0 {
-		    index := generate_hash(sphere_id = sphere_id, other_id = wall.id, other_is_wall = true)
+		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
 		    update_contact(index, contacts, delta, current_time, params)
 	    }
 	}
@@ -291,7 +291,7 @@ physics_update_chain :: proc(
 	torque = 0
 
 	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
-	append(&cells[id_cell_of_particle].particle_ids, sphere_id)
+	append(&cells[id_cell_of_particle].particle_ids, auto_cast sphere_id)
     }
 
 
@@ -305,13 +305,13 @@ physics_update_chain :: proc(
 	slice.reverse(cell_of_particle.particle_ids[:])
 
 	// in the same cell
-	for id_other in cell_of_particle.particle_ids do if sphere_id < id_other {
+	for id_other in cell_of_particle.particle_ids do if auto_cast sphere_id < id_other {
 	    delta: f64
 	    if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
 	    else do delta = measure_delta(&sphere, &spheres[id_other])
 
 	    if delta < 0 {
-		index := generate_hash(sphere_id = sphere_id, other_id = id_other, other_is_wall = false)
+		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
 		update_contact(index, contacts, delta, current_time, params)
 	    }
 	}
@@ -326,7 +326,7 @@ physics_update_chain :: proc(
 		else do delta = measure_delta(&sphere, &spheres[id_other])
 
 		if delta < 0 {
-		    index := generate_hash(sphere_id = sphere_id, other_id = id_other, other_is_wall = false)
+		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
 		    update_contact(index, contacts, delta, current_time, params)
 		}
 	    }
@@ -336,12 +336,12 @@ physics_update_chain :: proc(
 	    delta := measure_delta(&sphere, &wall)
 	    if is_periodic {
 		if delta < 0 && wall.center_position.x == 0 {
-		    index := generate_hash(sphere_id = sphere_id, other_id = wall.id, other_is_wall = true)
+		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
 		    update_contact(index, contacts, delta, current_time, params)
 		}
 	    } else {
 		if delta < 0 {
-		    index := generate_hash(sphere_id = sphere_id, other_id = wall.id, other_is_wall = true)
+		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
 		    update_contact(index, contacts, delta, current_time, params)
 		}
 	    }
@@ -473,9 +473,11 @@ measure_delta :: proc {
     measure_delta_sphere_wall,
 }
 
-INDEX_POSITION :: 10_000_000
-WALL_CHECK :: 100_000
-generate_hash :: proc(sphere_id, other_id: int, other_is_wall: bool) -> int {
+INDEX_POSITION :: 1_000_000
+WALL_CHECK :: 10_000
+
+// TODO: must change index_position and wall check
+generate_hash :: proc(sphere_id, other_id: i32, other_is_wall: bool) -> int {
     // NOTE: if we have 5000 particles max
     assert(sphere_id < 5000 && other_id < 5000)
 
@@ -483,11 +485,11 @@ generate_hash :: proc(sphere_id, other_id: int, other_is_wall: bool) -> int {
     second_index: int
 
     if other_is_wall {
-	first_index = sphere_id
-	second_index = other_id
+	first_index = auto_cast sphere_id
+	second_index = auto_cast other_id
     } else {
-	first_index = sphere_id if sphere_id < other_id else other_id
-	second_index = other_id if first_index == sphere_id else sphere_id
+	first_index = auto_cast sphere_id if sphere_id < other_id else auto_cast other_id
+	second_index = auto_cast other_id if first_index == auto_cast sphere_id else auto_cast sphere_id
     }
     if !other_is_wall do return first_index * INDEX_POSITION + second_index
     else do return first_index * INDEX_POSITION + 1 * WALL_CHECK + second_index

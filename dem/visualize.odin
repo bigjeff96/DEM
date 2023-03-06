@@ -25,8 +25,8 @@ RenderState :: struct {
 
 Physics_opts :: struct {
     sim_speed:             int,
-    id_selected_sphere:    int,
-    neighbor_particle_ids: [dynamic]int,
+    id_selected_sphere:    i32,
+    neighbor_particle_ids: [dynamic]i32,
 }
 
 Selection_state :: enum {
@@ -178,7 +178,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 
 	    case .no_selection:
 		context.allocator = context.temp_allocator
-		distance_sphere_ids := make(map[f32]int)
+		distance_sphere_ids := make(map[f32]i32)
 
 		for sphere, id in &spheres {
 		    using sphere
@@ -188,7 +188,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 			auto_cast (radius * SCALING_FACTOR),
 		    )
 		    if ray_collision.hit && ray_collision.distance <= math.F32_MAX {
-			distance_sphere_ids[ray_collision.distance] = id
+			distance_sphere_ids[ray_collision.distance] = i32(id)
 		    }
 		}
 		if len(distance_sphere_ids) > 0 {
@@ -536,7 +536,7 @@ debug_sim_code :: proc() {
 
 	    case .no_selection:
 		context.allocator = context.temp_allocator
-		distance_sphere_ids := make(map[f32]int)
+		distance_sphere_ids := make(map[f32]i32)
 
 		for sphere, id in &spheres {
 		    using sphere
@@ -546,7 +546,7 @@ debug_sim_code :: proc() {
 			auto_cast (radius * SCALING_FACTOR),
 		    )
 		    if ray_collision.hit && ray_collision.distance <= math.F32_MAX {
-			distance_sphere_ids[ray_collision.distance] = id
+			distance_sphere_ids[ray_collision.distance] = auto_cast id
 		    }
 		}
 		if len(distance_sphere_ids) > 0 {
@@ -767,7 +767,7 @@ render_legends :: proc(legends: []Legend) {
 
 render_spheres :: proc(
     spheres: []Sphere,
-    id_of_selected_sphere: int,
+    id_of_selected_sphere: i32,
     old_angles: []f64,
     render_state: ^RenderState,
     is_chain := false,
@@ -798,7 +798,7 @@ render_spheres :: proc(
 	    rlPopMatrix()
 	case .possible_selection:
 	    DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id_color % len(Colors)])
-	    if id == id_of_selected_sphere {
+	    if auto_cast id == id_of_selected_sphere {
 		DrawSphereWires(0, auto_cast radius, 5, 10, PINK)
 		rlPopMatrix()
 		render_vectors_on_sphere(render_state, &sphere)
@@ -808,7 +808,7 @@ render_spheres :: proc(
 	    }
 
 	case .confirmed_selection:
-	    if id == id_of_selected_sphere {
+	    if auto_cast id == id_of_selected_sphere {
 		if !render_transparent do DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id % len(Colors)])
 		DrawSphereWires(0, auto_cast radius, 5, 10, YELLOW)
 		rlPopMatrix()
@@ -823,7 +823,7 @@ render_spheres :: proc(
     }
 }
 
-render_chains :: proc(chains: []Chain, id_of_selected_sphere: int, old_angles: []f64, render_state: ^RenderState) {
+render_chains :: proc(chains: []Chain, id_of_selected_sphere: i32, old_angles: []f64, render_state: ^RenderState) {
     for chain, id in chains {
 	render_spheres(chain.spheres, id_of_selected_sphere, old_angles[:], render_state, true, id)
     }
@@ -871,7 +871,7 @@ render_all_cells :: proc(cell_context: ^Cell_context, walls: []Wall) {
     using rl
     for _, id in cells {
 	DrawCubeWires(
-	    position = vec3_to_rl(cell_coords_unique_id(id, cell_context, walls)) * f32(SCALING_FACTOR),
+	    position = vec3_to_rl(cell_coords_unique_id(auto_cast id, cell_context, walls)) * f32(SCALING_FACTOR),
 	    width = auto_cast (cell_length * SCALING_FACTOR),
 	    height = auto_cast (cell_length * SCALING_FACTOR),
 	    length = auto_cast (cell_length * SCALING_FACTOR),
@@ -880,7 +880,7 @@ render_all_cells :: proc(cell_context: ^Cell_context, walls: []Wall) {
     }
 }
 
-render_cells :: proc(cell_context: ^Cell_context, cell_ids: []int, walls: []Wall) {
+render_cells :: proc(cell_context: ^Cell_context, cell_ids: []i32, walls: []Wall) {
     using rl
     using cell_context
     for neighbor_id in cell_ids do if neighbor_id != 0 {
@@ -898,7 +898,7 @@ render_cell :: proc(cell_context: ^Cell_context, cell_id: int, walls: []Wall, co
     using rl
     using cell_context
     DrawCube(
-	position = vec3_to_rl(cell_coords_unique_id(cell_id,cell_context, walls)) *
+	position = vec3_to_rl(cell_coords_unique_id( auto_cast cell_id,cell_context, walls)) *
 	    f32(SCALING_FACTOR),
 	width = auto_cast (cell_length * SCALING_FACTOR),
 	height = auto_cast (cell_length * SCALING_FACTOR),

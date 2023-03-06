@@ -193,7 +193,7 @@ read_cell_context :: proc(filename: string) -> ^Cell_context {
 	total_particle_ids: int
 	os.read_ptr(file, &total_particle_ids, size_of(total_particle_ids))
 	for id in 0 ..< total_particle_ids {
-	    particle_id: int
+	    particle_id: i32
 	    _, err = os.read_ptr(file, &particle_id, size_of(int))
 	    assert(err == os.ERROR_NONE)
 	    append(&cell.particle_ids, particle_id)

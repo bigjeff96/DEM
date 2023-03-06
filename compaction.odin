@@ -10,7 +10,6 @@ import "core:mem"
 import "core:log"
 import "dem"
 
-
 main :: proc() {
     logger := log.create_console_logger()
     defer log.destroy_console_logger(logger)
@@ -64,7 +63,7 @@ delta_study :: proc(sim_directory: string) {
 	for sphere, sphere_id in spheres {
 	    using sphere
 	    id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
-	    append(&cells[id_cell_of_particle].particle_ids, sphere_id)
+	    append(&cells[id_cell_of_particle].particle_ids, auto_cast sphere_id)
 	}
 
 	for sphere, sphere_id in &spheres {
@@ -76,7 +75,7 @@ delta_study :: proc(sim_directory: string) {
 	    slice.reverse(cell_of_particle.particle_ids[:])
 
 	    // in the same cell
-	    for id_other in cell_of_particle.particle_ids do if sphere_id < id_other {
+	    for id_other in cell_of_particle.particle_ids do if cast(i32)sphere_id < id_other {
 		delta := measure_delta(&sphere, &spheres[id_other])
 		if delta < 0 do append(deltas, delta)
 
