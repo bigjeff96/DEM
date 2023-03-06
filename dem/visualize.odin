@@ -443,9 +443,9 @@ debug_sim_code :: proc() {
     radius: f64 = 1e-3
     current_time: f64 = 0
     density_glass_beads: f64 = 2500.0
-    box_length_x := 20 * 2 * radius
-    box_length_z := 20 * 2 * radius
-    box_length_y := 20 * 2 * radius
+    box_length_x := 4 * 2 * radius
+    box_length_z := 32 * 2 * radius
+    box_length_y := 32 * 2 * radius
     static_restitution_coeff := 0.8
     length_box := [3]f64{box_length_x, box_length_y, box_length_z}
     k_pile := 1000.
