@@ -15,7 +15,7 @@ Cell_info :: struct {
 }
 
 Cell_context :: struct {
-    info: Cell_info,
+    using info: Cell_info,
     cells: []Cell,
 }
 
@@ -243,7 +243,6 @@ cell_next_to_wall :: proc(cell: ^Cell, cell_context: ^Cell_context) -> bool {
 
 get_real_neighbor_cell_ids :: proc(cell_context: ^Cell_context, id_of_cell: int, experiment_type: Experiment_type) -> [dynamic]int {
     using cell_context
-    using info
     real_neighbor_cell_ids := make([dynamic]int, context.temp_allocator)
 
 

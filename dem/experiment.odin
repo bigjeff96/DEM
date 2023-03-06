@@ -1,15 +1,11 @@
 package dem
 
 import "core:slice"
-import "core:strings"
-import "core:mem"
 import "core:encoding/json"
 import "core:fmt"
 import "core:os"
 import "core:math"
-import "core:time"
-import "core:strconv"
-import "core:runtime"
+import "core:log"
 
 Experiment_type :: enum {
     shaker,
@@ -136,8 +132,8 @@ read_experiment :: proc(directory: string, results: ^Experiment) {
     results.data = data[:]
 }
 
-@(warning = "Must check if it works, since cell_context change")
 dump_cell_context :: proc(cell_context: ^Cell_context, directory: string) {
+    log.warn("function not tested")
     using cell_context
     file, ok := os.open(fmt.tprintf("%s%s", directory, "cells.dat"), os.O_RDWR | os.O_CREATE)
     defer os.close(file)
@@ -178,8 +174,8 @@ dump_cell_context :: proc(cell_context: ^Cell_context, directory: string) {
     }
 }
 
-@(warning = "Must check if it works, since cell_context change")
 read_cell_context :: proc(filename: string) -> ^Cell_context {
+    log.warn("function not tested")
     cells: [dynamic]Cell
     file, ok := os.open(filename, os.O_RDWR)
     defer os.close(file)

@@ -54,7 +54,6 @@ physics_update :: proc(
 ) {
     using rl, params
     using cell_context
-    using info
     // for looping over slices
     spheres := spheres
     /* cells := cells */
@@ -264,7 +263,6 @@ physics_update_chain :: proc(
 ) {
     using rl, params
     using cell_context
-    using info
     chains := chains
     spheres := spheres
     walls := walls

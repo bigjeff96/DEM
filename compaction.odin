@@ -6,11 +6,15 @@ import "core:fmt"
 import "core:os"
 import "core:math"
 import "core:time"
-import "core:strconv"
 import "core:mem"
+import "core:log"
 import "dem"
 
+
 main :: proc() {
+    logger := log.create_console_logger()
+    defer log.destroy_console_logger(logger)
+    context.logger = logger
     /* if len(os.args) != 3 { */
     /* fmt.println("ERROR: Need sim output directory") */
     /* fmt.println(len(os.args)) */
@@ -44,7 +48,6 @@ delta_study :: proc(sim_directory: string) {
     cell_context := results.cell_context
     deltas := new([dynamic]f64)
     using cell_context
-    using info
 
     for sim_state, sim_state_id in data {
 	walls := sim_state.walls

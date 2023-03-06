@@ -72,6 +72,7 @@ Total_time: f64
 visualize_experiment :: proc(experiment: ^Experiment) {
     // raylib window
     using rl
+    SetTraceLogLevel(.NONE)
     SetConfigFlags({.VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI, .WINDOW_RESIZABLE})
     InitWindow(1200, 700, "hihi test")
     SCREEN_WIDTH := GetScreenWidth()
@@ -392,6 +393,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 
 debug_sim_code :: proc() {
     using rl
+    SetTraceLogLevel(.NONE)
     SetConfigFlags({.VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI, .WINDOW_RESIZABLE})
     InitWindow(1200, 700, "hihi test")
     SCREEN_WIDTH := GetScreenWidth()
@@ -449,12 +451,10 @@ debug_sim_code :: proc() {
     k_pile := 1000.
 
     params := init_params(radius, density_glass_beads, static_restitution_coeff, k_pile, length_box)
-    fmt.printf("dt is %.10f\n", params.dt)
 
     walls := init_walls(length_box, 2 * radius)
     cell_context := init_cell_context(radius, walls)
     using cell_context
-    using info
     contacts: map[int]Contact
     //make spheres
     spheres: [dynamic]Sphere
@@ -868,7 +868,6 @@ sphere_is_selected :: proc(mouse_ray: rl.Ray, scaling_factor: f64, spheres: []Sp
 
 render_all_cells :: proc(cell_context: ^Cell_context, walls: []Wall) {
     using cell_context
-    using info
     using rl
     for _, id in cells {
 	DrawCubeWires(
@@ -884,7 +883,6 @@ render_all_cells :: proc(cell_context: ^Cell_context, walls: []Wall) {
 render_cells :: proc(cell_context: ^Cell_context, cell_ids: []int, walls: []Wall) {
     using rl
     using cell_context
-    using info
     for neighbor_id in cell_ids do if neighbor_id != 0 {
 	DrawCubeWires(
 	    position = vec3_to_rl(cell_coords_unique_id(neighbor_id, cell_context, walls)) *
@@ -899,7 +897,6 @@ render_cells :: proc(cell_context: ^Cell_context, cell_ids: []int, walls: []Wall
 render_cell :: proc(cell_context: ^Cell_context, cell_id: int, walls: []Wall, color: rl.Color) {
     using rl
     using cell_context
-    using info
     DrawCube(
 	position = vec3_to_rl(cell_coords_unique_id(cell_id,cell_context, walls)) *
 	    f32(SCALING_FACTOR),
