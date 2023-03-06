@@ -15,8 +15,7 @@ Chain :: struct {
 
 init_chain :: proc(
     walls: []Wall,
-    radius_for_spheres,
-    density: f64,
+    radius_for_spheres, density: f64,
     spheres: []Sphere,
     chains_to_check_collision: []Chain,
     bending_exp: bool = false,
@@ -33,12 +32,7 @@ init_chain :: proc(
 	    position_seed, chain_direction = seed_position_and_orientation(walls, radius_for_spheres, len(spheres))
 	}
 
-	chain_direction_q: linalg.Quaternionf64 = quaternion(
-	    0.,
-	    chain_direction.x,
-	    chain_direction.y,
-	    chain_direction.z,
-	)
+	chain_direction_q: linalg.Quaternionf64 = quaternion(0., chain_direction.x, chain_direction.y, chain_direction.z)
 	// physical constants
 	spheres := spheres
 	for sphere in &spheres {
@@ -56,19 +50,19 @@ init_chain :: proc(
 
 	for sphere, id in &chain.spheres {
 	    using sphere
-	    if id == 0 do position = position_seed;
+	    if id == 0 do position = position_seed
 	    else do position = chain.spheres[id - 1].position + chain_direction * (2.0 * radius)
 	}
 
-	check_collision := true
+	is_colliding := false
 	for other_chain in &chains_to_check_collision {
 	    if collision_chains(&chain, &other_chain) {
-		check_collision = false
+		is_colliding = true
 		break
 	    }
 	}
 
-	if check_collision do break outer_loop
+	if !is_colliding do break outer_loop
     }
 
     return chain
@@ -91,8 +85,9 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
 	    sphere_a.position + chain_axis_a * sphere_a.radius - (sphere_b.position - chain_axis_b * sphere_b.radius)
 	// normal forces in chain
 	normal: vec3
-	if length(surface_to_surface_vec) > 0. do normal = normalize(surface_to_surface_vec);
+	if length(surface_to_surface_vec) > 0. do normal = normalize(surface_to_surface_vec)
 	else do normal = -chain_axis_a
+	
 	surface_slip_velocity :=
 	    sphere_a.velocity +
 	    cross(sphere_a.angular_velocity, sphere_a.radius * chain_axis_a) -
@@ -113,8 +108,7 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
 	if abs(quat_a_to_b) > 0. {
 	    angle, axis := linalg.angle_axis_from_quaternion(quat_a_to_b)
 	    // this seems to contribute to the bending of the chain
-	    viscosity_term: vec3 =
-		0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity, auto_cast axis)
+	    viscosity_term: vec3 = 0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity, auto_cast axis)
 	    shear_torque: vec3 = auto_cast 0.000005 * angle * (auto_cast axis) - viscosity_term * (auto_cast axis)
 	    sphere_a.torque += shear_torque
 	    sphere_b.torque -= shear_torque
@@ -127,8 +121,7 @@ seed_position_and_orientation :: proc(
     radius_sphere: f64,
     total_spheres_in_chain: int,
 ) -> (
-    seed_position,
-    chain_orientation: vec3,
+    seed_position, chain_orientation: vec3,
 ) {
 
     length_box := get_length_box(walls)
@@ -141,8 +134,7 @@ seed_position_and_orientation :: proc(
 	    rand.float64_range(-length_box.z / 2 + radius_sphere, length_box.z / 2 - radius_sphere),
 	}
 	chain_orientation = random_unit_vector()
-	last_sphere_position :=
-	    seed_position + f64(total_spheres_in_chain - 1) * (2 * radius_sphere) * chain_orientation
+	last_sphere_position := seed_position + f64(total_spheres_in_chain - 1) * (2 * radius_sphere) * chain_orientation
 
 	check_collision := false
 	for wall in walls {

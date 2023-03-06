@@ -5,6 +5,7 @@ import "core:math/rand"
 import "core:fmt"
 import "core:math"
 import "core:slice"
+import "core:log"
 import "core:math/linalg"
 
 G: f64 : 9.81
@@ -56,7 +57,6 @@ physics_update :: proc(
     using cell_context
     // for looping over slices
     spheres := spheres
-    /* cells := cells */
     walls := walls
 
     length_box := get_length_box(walls)
@@ -115,7 +115,7 @@ physics_update :: proc(
 
 		if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
 		else do delta = measure_delta(&sphere, &spheres[id_other])
-		
+
 		if delta < 0 {
 		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
 		    update_contact(index, contacts, delta, current_time, params)
@@ -129,8 +129,8 @@ physics_update :: proc(
 		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
 		update_contact(index, contacts, delta, current_time, params)
 	    } else if delta < 0 {
-		    index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
-		    update_contact(index, contacts, delta, current_time, params)
+		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = wall.id, other_is_wall = true)
+		update_contact(index, contacts, delta, current_time, params)
 	    }
 	}
     }
@@ -149,7 +149,7 @@ physics_update :: proc(
 		slip_velocity = velocity + cross(angular_velocity, -normal * radius) - wall.velocity
 		contact_viscosity_wall_normal := -2. * math.ln(restitution_coeff) *
 		    math.sqrt(mass * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
-		
+
 		contact_viscosity_wall_tangent: f64 = (1. / 5.) * contact_viscosity_wall_normal
 		contact_viscosity_normal = contact_viscosity_wall_normal
 		contact_viscosity_tangent = contact_viscosity_wall_tangent
@@ -172,7 +172,7 @@ physics_update :: proc(
 		effective_mass := (sphere.mass * other_sphere.mass) / (sphere.mass + other_sphere.mass)
 		contact_viscosity_particles_normal := -2. * math.ln(restitution_coeff) *
 		    math.sqrt((effective_mass / 2) * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
-		
+
 		contact_viscosity_particles_tangent := contact_viscosity_particles_normal * 0.2
 		contact_viscosity_normal = contact_viscosity_particles_normal
 		contact_viscosity_tangent = contact_viscosity_particles_tangent
@@ -241,13 +241,11 @@ physics_update :: proc(
 
 	// update the orientation quaternion
 	if length(angular_velocity) > 0 {
-	    previous_rotation := orientation
 	    new_rotation := linalg.quaternion_angle_axis_f64(
 		length(angular_velocity) * dt,
 		auto_cast normalize(angular_velocity),
 	    )
-	    final_rotation := new_rotation * previous_rotation
-	    orientation = final_rotation
+	    orientation = new_rotation * orientation
 	}
     }
 }
@@ -370,13 +368,11 @@ physics_update_chain :: proc(
 
 	// update the orientation
 	if length(angular_velocity) > 0 {
-	    previous_rotation := orientation
 	    new_rotation := linalg.quaternion_angle_axis_f64(
 		length(angular_velocity) * dt,
 		auto_cast normalize(angular_velocity),
 	    )
-	    final_rotation := new_rotation * previous_rotation
-	    orientation = final_rotation
+	    orientation = new_rotation * orientation
 	}
     }
 }
@@ -423,21 +419,6 @@ init_walls :: proc(length_box: [3]f64, diameter: f64) -> []Wall {
     return walls
 }
 
-
-/* walls_next_to_cell_init :: proc(close_walls: ^[dynamic]Wall, walls: []Wall, cell: ^Cell, cell_context: ^Cell_context) { */
-
-/*     i, j, k := indices_from_unique_id(cell.id, cell_context) */
-
-/*     using cell_context */
-/*     if i == 0 do append(close_walls, walls[0]) */
-/*     if i == total_cells_along.x - 1 do append(close_walls, walls[1]) */
-/*     if j == 0 do append(close_walls, walls[2]) */
-/*     if j == total_cells_along.y - 1 do append(close_walls, walls[3]) */
-/*     if k == 0 do append(close_walls, walls[4]) */
-/*     if k == total_cells_along.z - 1 do append(close_walls, walls[5]) */
-/* } */
-
-
 measure_delta_spheres :: #force_inline proc(sphere, other_sphere: ^Sphere) -> (delta: f64) {
     delta = length(sphere.position - other_sphere.position) - sphere.radius - other_sphere.radius
     return
@@ -453,8 +434,7 @@ measure_delta_spheres_periodic :: #force_inline proc(
     sign_x := 1. if sphere_to_sphere_vec.x > 0 else -1
 
     if abs(sphere_to_sphere_vec.x) > length_box_periodic / 2 {
-	e_x := vec3{1., 0, 0}
-	new_sphere_pos := sphere.position - sign_x * e_x * length_box_periodic
+	new_sphere_pos := sphere.position - sign_x * E_x * length_box_periodic
 	sphere_to_sphere_vec = new_sphere_pos - other_sphere.position
     }
     delta = length(sphere_to_sphere_vec) - sphere.radius - other_sphere.radius
@@ -476,7 +456,6 @@ measure_delta :: proc {
 INDEX_POSITION :: 1_000_000
 WALL_CHECK :: 10_000
 
-// TODO: must change index_position and wall check
 generate_hash :: proc(sphere_id, other_id: i32, other_is_wall: bool) -> int {
     // NOTE: if we have 5000 particles max
     assert(sphere_id < 5000 && other_id < 5000)
@@ -510,19 +489,25 @@ get_indices_from_hash :: proc(hash: int) -> (sphere_index, other_index: int, oth
 
 update_contact :: proc(index: int, contacts: ^map[int]Contact, delta, current_time: f64, params: Params) {
     using params
-    contact: Contact
-    contact.delta_normal = delta
-    contact.time_last_update = current_time
 
-    if contact.friction_coeff == 0 do contact.friction_coeff = mu_static
+    old_contact, exists := contacts[index]
 
-    // NOTE: This seems pretty stupid, feels like I don't need this
-    sphere_id, other_id, other_is_wall := get_indices_from_hash(index)
-    contact.particle_id = auto_cast sphere_id
-    contact.particle_or_wall_id = auto_cast other_id
-    contact.other_is_wall = other_is_wall
-
-    contacts[index] = contact
+    if !exists {
+	contact: Contact
+	contact.delta_normal = delta
+	contact.time_last_update = current_time
+	contact.friction_coeff = mu_static
+	sphere_id, other_id, other_is_wall := get_indices_from_hash(index)
+	contact.particle_id = auto_cast sphere_id
+	contact.particle_or_wall_id = auto_cast other_id
+	contact.other_is_wall = other_is_wall
+	contacts[index] = contact
+	return
+    } else {
+	old_contact.delta_normal = delta
+	old_contact.time_last_update = current_time
+	return
+    }
 }
 
 update_contact_forces :: proc(
@@ -548,7 +533,8 @@ update_contact_forces :: proc(
 		slip_velocity = velocity + cross(angular_velocity, -normal * radius) - wall.velocity
 		contact_viscosity_wall_normal := -2. * math.ln(restitution_coeff) *
 		    math.sqrt(mass * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
-		contact_viscosity_wall_tangent: f64 = (1. / 5.) * contact_viscosity_wall_normal
+		
+		contact_viscosity_wall_tangent: f64 = contact_viscosity_wall_normal * 0.2
 		contact_viscosity_normal = contact_viscosity_wall_normal
 		contact_viscosity_tangent = contact_viscosity_wall_tangent
 	    } else {
@@ -667,4 +653,3 @@ get_length_box :: #force_inline proc(walls: []Wall) -> [3]f64 {
     length_box := [3]f64{length_x, length_y, length_z}
     return length_box
 }
-
