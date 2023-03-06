@@ -453,7 +453,7 @@ measure_delta :: proc {
     measure_delta_sphere_wall,
 }
 
-INDEX_POSITION :: 1_000_000
+INDEX_POSITION :: 10_000_000
 WALL_CHECK :: 10_000
 
 generate_hash :: proc(sphere_id, other_id: i32, other_is_wall: bool) -> int {
