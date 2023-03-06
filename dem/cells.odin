@@ -213,6 +213,7 @@ cell_coords_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context, walls
 }
 
 position_to_cell_id :: proc(position: vec3, cell_context: ^Cell_context, walls: []Wall) -> (cell_id: i32) {
+
     using cell_context.info
     i := clamp(i32(((position.x - walls[0].center_position.x) / (cell_length)) + 0.5), 0, total_cells_along.x - 1)
     j := clamp(i32(((position.y - walls[2].center_position.y) / (cell_length)) + 0.5), 0, total_cells_along.y - 1)
