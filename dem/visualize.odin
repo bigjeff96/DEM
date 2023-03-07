@@ -506,10 +506,6 @@ debug_sim_code :: proc() {
 	    if !pause {
 		for _ in 0 ..< sim_speed {
 		    physics_update_chain(chains[:], spheres[:], cell_context, walls, &contacts, params)
-		    /* spheres[0].position = walls[SIDE_WALL_ID].center_position + spheres[0].radius * walls[SIDE_WALL_ID].normal  */
-		    /* spheres[0].velocity = 0 */
-		    /* spheres[0].angular_velocity = 0 */
-		    /* spheres[0].orientation = 1 */
 		}
 		current_time += params.dt * f64(sim_speed)
 	    }
