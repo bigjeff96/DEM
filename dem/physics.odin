@@ -352,7 +352,6 @@ physics_update_chain :: proc(
     for chain in &chains do chain_internal_forces(chain, chain.spheres, params)
 
     for sphere, id in &spheres {
-	if id == 0 do continue
 	using sphere
 	velocity += force * f64(dt / mass)
 	angular_velocity += torque * f64(dt / moment_of_inertia)

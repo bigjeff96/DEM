@@ -183,7 +183,7 @@ init_cell_context_PBC :: proc(radius: f64, walls: []Wall) -> (cell_context: ^Cel
 }
 
 unique_id_from_indices :: proc(i, j, k: i32, cell_context: ^Cell_context) -> (unique_id: i32) {
-    using cell_context.info
+    using cell_context
     total_cells_level := total_cells_along.x * total_cells_along.y
 
     unique_id = i + j * total_cells_along.x + k * total_cells_level
@@ -191,7 +191,7 @@ unique_id_from_indices :: proc(i, j, k: i32, cell_context: ^Cell_context) -> (un
 }
 
 indices_from_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context) -> (i32, i32, i32) {
-    using cell_context.info
+    using cell_context
     using math
     total_cells_level: i32 = total_cells_along.x * total_cells_along.y
 
@@ -203,7 +203,7 @@ indices_from_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context) -> (
 
 cell_coords_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context, walls: []Wall) -> vec3 {
     i, j, k := indices_from_unique_id(unique_id, cell_context)
-    using cell_context.info
+    using cell_context
     position: vec3
     position.x = walls[0].center_position.x + cell_length / 2. + auto_cast i * cell_length
     position.y = walls[2].center_position.y + cell_length / 2. + auto_cast j * cell_length
@@ -214,7 +214,7 @@ cell_coords_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context, walls
 
 position_to_cell_id :: proc(position: vec3, cell_context: ^Cell_context, walls: []Wall) -> (cell_id: i32) {
 
-    using cell_context.info
+    using cell_context
     i := clamp(i32(((position.x - walls[0].center_position.x) / (cell_length)) + 0.5), 0, total_cells_along.x - 1)
     j := clamp(i32(((position.y - walls[2].center_position.y) / (cell_length)) + 0.5), 0, total_cells_along.y - 1)
     k := clamp(i32(((position.z - walls[4].center_position.z) / (cell_length)) + 0.5), 0, total_cells_along.z - 1)
