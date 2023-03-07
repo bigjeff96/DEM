@@ -14,27 +14,8 @@ main :: proc() {
     logger := log.create_console_logger()
     defer log.destroy_console_logger(logger)
     context.logger = logger
-    /* if len(os.args) != 3 { */
-    /* fmt.println("ERROR: Need sim output directory") */
-    /* fmt.println(len(os.args)) */
-    /* os.exit(1) */
-    /* } */
 
-    /* shaker_param, ok := strconv.parse_f64(os.args[1]) */
-    /* assert(ok) */
-
-    /* compaction_experiment_and_dump(shaker_param, os.args[2], true) */
     dem.debug_sim_code()
-    /* results := new(dem.Experiment) */
-    /* start := time.now() */
-    /* dem.read_experiment("Data/compaction_simple_spheres/2.7shake_1000parts_535sec_0.5sec_wait_7diam_box/",results) */
-    /* end := time.now() */
-    /* total_time := time.diff(start,end) */
-    /* fmt.println(total_time) */
-    /* dem.visualize_experiment(results) */
-    /* fmt.println(os.args[1]) */
-    /* compaction_analysis(os.args[1]) */
-    /* delta_study(os.args[1]) */
 }
 
 delta_study :: proc(sim_directory: string) {
@@ -52,10 +33,7 @@ delta_study :: proc(sim_directory: string) {
 	walls := sim_state.walls
 	spheres := sim_state.spheres
 
-	length_box_x := length(walls[1].center_position - walls[0].center_position)
-	length_box_y := length(walls[3].center_position - walls[2].center_position)
-	length_box_z := length(walls[5].center_position - walls[4].center_position)
-	length_box := [3]f64{length_box_x, length_box_y, length_box_z}
+	length_box := get_length_box(walls)
 
 	for cell in &cells {
 	    clear(&cell.particle_ids)

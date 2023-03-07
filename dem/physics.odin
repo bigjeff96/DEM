@@ -102,7 +102,7 @@ physics_update :: proc(
 	    if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
 	    else do delta = measure_delta(&sphere, &spheres[id_other])
 	    if delta < 0 {
-		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = auto_cast id_other, other_is_wall = false)
+		index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
 		update_contact(index, contacts, delta, current_time, params)
 	    }
 	}
