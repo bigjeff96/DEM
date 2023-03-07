@@ -76,10 +76,10 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
     for i: int = 0; i < len(spheres) - 1; i += 1 {
 	sphere_a := &spheres[i]
 	sphere_b := &spheres[i + 1]
-	chain_axis_a_q := (sphere_a.orientation) * alignment_axis_q * conj(sphere_a.orientation)
-	chain_axis_b_q := (sphere_b.orientation) * alignment_axis_q * conj(sphere_b.orientation)
-	chain_axis_a := normalize(vec3_from_quat(chain_axis_a_q))
-	chain_axis_b := normalize(vec3_from_quat(chain_axis_b_q))
+	chain_axis_a_q := sphere_a.orientation * alignment_axis_q * conj(sphere_a.orientation)
+	chain_axis_b_q := sphere_b.orientation * alignment_axis_q * conj(sphere_b.orientation)
+	chain_axis_a := vec3_from_quat(chain_axis_a_q)
+	chain_axis_b := vec3_from_quat(chain_axis_b_q)
 
 	surface_to_surface_vec :=
 	    sphere_a.position + chain_axis_a * sphere_a.radius - (sphere_b.position - chain_axis_b * sphere_b.radius)
@@ -102,14 +102,19 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
 	sphere_b.torque += torque_normal_force_b
 
 	// shear forces
-	quat_a := linalg.normalize(sphere_a.orientation)
-	quat_b := linalg.normalize(sphere_b.orientation)
-	quat_a_to_b: linalg.Quaternionf64 = quat_b * linalg.quaternion_inverse(quat_a)
+	quat_a_to_b: linalg.Quaternionf64 = sphere_b.orientation * linalg.quaternion_inverse(sphere_a.orientation)
 	if abs(quat_a_to_b) > 0. {
-	    angle, axis := linalg.angle_axis_from_quaternion(quat_a_to_b)
-	    // this seems to contribute to the bending of the chain
-	    viscosity_term: vec3 = 0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity, auto_cast axis)
-	    shear_torque: vec3 = auto_cast 0.000005 * angle * (auto_cast axis) - viscosity_term * (auto_cast axis)
+	    angle, axis, ok := angle_axis_from_quat(quat_a_to_b)
+	    shear_torque: vec3
+	    if ok {
+		// this seems to contribute to the bending of the chain
+		viscosity_term := 0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity, auto_cast axis)
+		shear_torque = auto_cast 0.005 * angle * (auto_cast axis) - viscosity_term * axis
+	    } else {
+		// what axis to use in this case ?
+		viscosity : vec3 = 0.00000025 * (sphere_a.angular_velocity - sphere_b.angular_velocity)
+		shear_torque =  - viscosity
+	    }
 	    sphere_a.torque += shear_torque
 	    sphere_b.torque -= shear_torque
 	}
@@ -182,4 +187,21 @@ vec_is_nan :: #force_inline proc(vec: $T/[3]$E) -> bool where intrinsics.type_is
 vec3_from_quat :: #force_inline proc(q: linalg.Quaternionf64) -> vec3 {
     result := vec3{imag(q), jmag(q), kmag(q)}
     return result
+}
+
+
+angle_axis_from_quat :: proc(q: linalg.Quaternionf64) -> (angle: f64, axis: vec3, ok: bool) {
+    if 1 - q.w * q.w <= 0 {
+	ok = false
+	return
+    } else {
+    angle = linalg.angle_from_quaternion_f64(q)
+    s := math.sqrt_f64(1 - q.w * q.w)
+	axis.x = q.x / s
+	axis.y = q.y / s
+	axis.z = q.z / s
+	ok = true
+    }
+
+    return
 }
