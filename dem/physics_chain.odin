@@ -27,7 +27,7 @@ init_chain :: proc(
 
 	if bending_exp {
 	    chain_direction = walls[SIDE_WALL_ID].normal
-	    position_seed = walls[SIDE_WALL_ID].center_position + radius_for_spheres * chain_direction
+	    position_seed = 0
 	} else {
 	    position_seed, chain_direction = seed_position_and_orientation(walls, radius_for_spheres, len(spheres))
 	}
