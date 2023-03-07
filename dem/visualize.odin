@@ -263,7 +263,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 		    scaled_position_neighbor := vec3_to_rl(neighbor_particle.position * SCALING_FACTOR)
 		    scaled_radius_neighbor := f32(neighbor_particle.radius * SCALING_FACTOR)
 
-		    if measure_delta(&spheres[id_selected_sphere], neighbor_particle) <= 0 {
+		    if measure_delta(&spheres[id_selected_sphere], neighbor_particle) < 0 {
 			DrawSphere(scaled_position_neighbor, scaled_radius_neighbor, BLACK)
 		    } else do DrawSphere(scaled_position_neighbor, scaled_radius_neighbor, PINK)
 		}
@@ -615,7 +615,7 @@ debug_sim_code :: proc() {
 		    scaled_position_neighbor := vec3_to_rl(neighbor_particle.position * SCALING_FACTOR)
 		    scaled_radius_neighbor := f32(neighbor_particle.radius * SCALING_FACTOR)
 
-		    if measure_delta(&spheres[id_selected_sphere], neighbor_particle) <= 0 {
+		    if measure_delta(&spheres[id_selected_sphere], neighbor_particle) < 0 {
 			DrawSphere(scaled_position_neighbor, scaled_radius_neighbor, BLACK)
 		    } else do DrawSphere(scaled_position_neighbor, scaled_radius_neighbor, PINK)
 		}
@@ -682,7 +682,7 @@ debug_sim_code :: proc() {
 		    using sphere
 		    volume_all_spheres += f64(4. / 3.) * math.PI * math.pow(radius, 3)
 		}
-		mu.label(ctx, tprintf("Total energy: %.6f%%", 100. * total_energy / (max_kinectic_energy * f64(len(spheres)))))
+		mu.label(ctx, tprintf("Total Kinetic energy: %.6f%%", 100. * total_energy / (max_kinectic_energy * f64(len(spheres)))))
 		mu.label(ctx, tprintf("Density ratio: %.5f%%", 100. * (volume_all_spheres / volume_pile)))
 		mu.label(ctx, tprintf("Max heigth: %.10f", max_height))
 		if selection != .no_selection {
