@@ -402,17 +402,26 @@ debug_sim_code :: proc() {
 
     // raylib camera
     camera := Camera{}
-    camera.position = Vector3{15., 0, 1.}
+    camera.position = Vector3{100., 0, 1.}
     camera.target = Vector3{0, 0, 0}
     camera.up = Vector3{0, 1, 0}
     camera.fovy = 45.0
     camera.projection = .PERSPECTIVE
     SetCameraMode(camera, .FREE)
 
-    physics_opts := Physics_opts {
-	sim_speed          = 250,
-	id_selected_sphere = 0,
+    physics_opts : Physics_opts
+    when ODIN_DEBUG {
+	physics_opts = {
+	    sim_speed          = 300,
+	    id_selected_sphere = 0,
+	}
+    } else {
+	physics_opts = {
+	    sim_speed          = 700,
+	    id_selected_sphere = 0,
+	}
     }
+    
 
     // microui
     pixels := make([][4]u8, mu.DEFAULT_ATLAS_WIDTH * mu.DEFAULT_ATLAS_HEIGHT)
