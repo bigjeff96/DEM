@@ -126,6 +126,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
     }
 
     old_angles: [dynamic]f64
+    old_axes: [dynamic]vec3
 
     // wall stuff
     length_box := get_length_box(experiment.data[0].walls)
@@ -216,7 +217,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 	    BeginMode3D(camera)
 	    defer EndMode3D()
 
-	    render_spheres(spheres[:], physics_opts.id_selected_sphere, old_angles[:], &render_state)
+	    render_spheres(spheres[:], physics_opts.id_selected_sphere, old_angles[:], old_axes[:], &render_state)
 	    //Box
 	    fmt.printf("\r %.10f", walls[2].center_position.y)
 	    DrawCubeWires(
@@ -483,6 +484,7 @@ debug_sim_code :: proc() {
 	append(&chains, chain)
     }
     old_angles := make([]f64, total_particles_per_chain * total_chains)
+    old_axes := make([]vec3, total_particles_per_chain * total_chains)
     for value in &old_angles do value = 0.
 	// main loop
     SetTargetFPS(60)
@@ -577,7 +579,7 @@ debug_sim_code :: proc() {
 	    BeginMode3D(camera)
 	    defer EndMode3D()
 
-	    render_chains(chains[:], physics_opts.id_selected_sphere, old_angles[:], &render_state)
+	    render_chains(chains[:], physics_opts.id_selected_sphere, old_angles[:], old_axes[:], &render_state)
 	    /* render_spheres(spheres[:], physics_opts.id_selected_sphere, old_angles[:], &render_state) */
 	    //Box
 	    DrawCubeWires(
@@ -774,6 +776,7 @@ render_spheres :: proc(
     spheres: []Sphere,
     id_of_selected_sphere: i32,
     old_angles: []f64,
+    old_axes: []vec3,
     render_state: ^RenderState,
     is_chain := false,
     id_of_chain := 0,
@@ -784,11 +787,16 @@ render_spheres :: proc(
     for sphere, id in &spheres {
 	using sphere
 
-	angle, axis := linalg.angle_axis_from_quaternion_f64(auto_cast orientation)
-	angle = math.to_degrees(angle)
-
-	if angle <= 60 && old_angles[id] > 280 do angle = math.TAU * math.DEG_PER_RAD - angle
-	old_angles[id] = angle
+	angle, axis, ok := angle_axis_from_quat(orientation)
+	if ok {
+	    angle = math.to_degrees(angle)
+	    if angle <= 60 && old_angles[id] > 280 do angle = math.TAU * math.DEG_PER_RAD - angle
+	    old_angles[id] = angle
+	    old_axes[id] = axis
+	} else {
+	    angle = old_angles[id]
+	    axis = old_axes[id]
+	}
 
 	rlPushMatrix()
 	rlScalef(auto_cast SCALING_FACTOR, auto_cast SCALING_FACTOR, auto_cast SCALING_FACTOR)
@@ -796,41 +804,36 @@ render_spheres :: proc(
 	if orientation != 1 do rlRotatef(auto_cast angle, auto_cast axis.x, auto_cast axis.y, auto_cast axis.z)
 
 	id_color := id_of_chain if is_chain else id
+	defer {
+	    rlPopMatrix()
+	    if selection != .no_selection && id == auto_cast id_of_selected_sphere do render_vectors_on_sphere(render_state, &sphere)
+	}
 	switch selection {
 	case .no_selection:
 	    DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id_color % len(Colors)])
 	    DrawSphereWires(0, auto_cast radius, 5, 10, BLACK)
-	    rlPopMatrix()
 	case .possible_selection:
 	    DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id_color % len(Colors)])
 	    if auto_cast id == id_of_selected_sphere {
 		DrawSphereWires(0, auto_cast radius, 5, 10, PINK)
-		rlPopMatrix()
-		render_vectors_on_sphere(render_state, &sphere)
 	    } else {
 		DrawSphereWires(0, auto_cast radius, 5, 10, BLACK)
-		rlPopMatrix()
 	    }
-
 	case .confirmed_selection:
 	    if auto_cast id == id_of_selected_sphere {
 		if !render_transparent do DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id % len(Colors)])
 		DrawSphereWires(0, auto_cast radius, 5, 10, YELLOW)
-		rlPopMatrix()
-		render_vectors_on_sphere(render_state, &sphere)
 	    } else {
 		DrawSphereEx(0, auto_cast radius, 5, 10, Colors[id_color % len(Colors)])
 		DrawSphereWires(0, auto_cast radius, 5, 10, BLACK)
-		rlPopMatrix()
 	    }
 	}
-
     }
 }
 
-render_chains :: proc(chains: []Chain, id_of_selected_sphere: i32, old_angles: []f64, render_state: ^RenderState) {
+render_chains :: proc(chains: []Chain, id_of_selected_sphere: i32, old_angles: []f64, old_axes: []vec3, render_state: ^RenderState) {
     for chain, id in chains {
-	render_spheres(chain.spheres, id_of_selected_sphere, old_angles[:], render_state, true, id)
+	render_spheres(chain.spheres, id_of_selected_sphere, old_angles[:], old_axes[:], render_state, true, id)
     }
 }
 
