@@ -491,7 +491,7 @@ get_indices_from_hash :: proc(hash: int) -> (sphere_index, other_index: int, oth
 update_contact :: proc(index: int, contacts: ^map[int]Contact, delta, current_time: f64, params: Params) {
     using params
 
-    old_contact, exists := contacts[index]
+    old_contact, exists := &contacts[index]
 
     if !exists {
 	contact: Contact
