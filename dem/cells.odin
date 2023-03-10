@@ -195,8 +195,8 @@ indices_from_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context) -> (
     using math
     total_cells_level: i32 = total_cells_along.x * total_cells_along.y
 
-    k: i32 = auto_cast floor_div(unique_id, auto_cast total_cells_level)
-    j: i32 = auto_cast floor_div(unique_id % total_cells_level, total_cells_along.x)
+    k: i32 = floor_div(unique_id, total_cells_level)
+    j: i32 = floor_div(unique_id % total_cells_level, total_cells_along.x)
     i: i32 = (unique_id % total_cells_level) % total_cells_along.x
     return i, j, k
 }
