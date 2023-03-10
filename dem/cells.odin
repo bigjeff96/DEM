@@ -212,12 +212,12 @@ cell_coords_unique_id :: proc(unique_id: i32, cell_context: ^Cell_context, walls
     return position
 }
 
-position_to_cell_id :: proc(position: vec3, cell_context: ^Cell_context, walls: []Wall) -> (cell_id: i32) {
+position_to_cell_id :: #force_inline proc(position: vec3, cell_context: ^Cell_context, walls: []Wall) -> (cell_id: i32) {
 
     using cell_context
-    i := clamp(i32(((position.x - walls[0].center_position.x) / (cell_length))), 0, total_cells_along.x - 1)
-    j := clamp(i32(((position.y - walls[2].center_position.y) / (cell_length))), 0, total_cells_along.y - 1)
-    k := clamp(i32(((position.z - walls[4].center_position.z) / (cell_length))), 0, total_cells_along.z - 1)
+    i := i32(((position.x - walls[0].center_position.x) / (cell_length)))
+    j := i32(((position.y - walls[2].center_position.y) / (cell_length)))
+    k := i32(((position.z - walls[4].center_position.z) / (cell_length)))
 
     cell_id = unique_id_from_indices(i, j, k, cell_context)
     return
