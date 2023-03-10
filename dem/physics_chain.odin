@@ -25,7 +25,7 @@ init_chain :: proc(
     outer_loop: for true {
 	position_seed, chain_direction: vec3
 
-	if bending_exp {
+	if !bending_exp {
 	    chain_direction = walls[SIDE_WALL_ID].normal
 	    position_seed = 0
 	} else {
@@ -85,7 +85,7 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
 	    sphere_a.position + chain_axis_a * sphere_a.radius - (sphere_b.position - chain_axis_b * sphere_b.radius)
 	// normal forces in chain
 	normal: vec3
-	if length(surface_to_surface_vec) > 0. do normal = normalize(surface_to_surface_vec)
+	if length_squared(surface_to_surface_vec) > 0. do normal = normalize(surface_to_surface_vec)
 	else do normal = -chain_axis_a
 	
 	surface_slip_velocity :=

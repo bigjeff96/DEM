@@ -154,7 +154,7 @@ physics_update :: proc(
 	}
 
 	// update the orientation quaternion
-	if length(angular_velocity) > 0 {
+	if length_squared(angular_velocity) > 0 {
 	    new_rotation := linalg.quaternion_angle_axis_f64(
 		length(angular_velocity) * dt,
 		auto_cast normalize(angular_velocity),
@@ -199,8 +199,7 @@ physics_update_chain :: proc(
 	    if position.x < -length_box.x / 2 do position.x = position.x + length_box.x
 	    if position.x > length_box.x / 2 do position.x = position.x - length_box.x
 	}
-	e_y := vec3{0., 1., 0.}
-	force = -e_y * mass * G
+	force = -E_y * mass * G
 	torque = 0
 
 	id_cell_of_particle := position_to_cell_id(position, cell_context, walls)
@@ -266,7 +265,7 @@ physics_update_chain :: proc(
     for chain in &chains do chain_internal_forces(chain, chain.spheres, params)
 
     for sphere, id in &spheres {
-	if id == 0 do continue
+	/* if id == 0 do continue */
 	using sphere
 	velocity += force * f64(dt / mass)
 	angular_velocity += torque * f64(dt / moment_of_inertia)
@@ -282,7 +281,7 @@ physics_update_chain :: proc(
 	}
 
 	// update the orientation
-	if length(angular_velocity) > 0 {
+	if length_squared(angular_velocity) > 0 {
 	    new_rotation := linalg.quaternion_angle_axis_f64(
 		length(angular_velocity) * dt,
 		auto_cast normalize(angular_velocity),
@@ -389,7 +388,7 @@ generate_hash :: proc(sphere_id, other_id: i32, other_is_wall: bool) -> int {
     else do return first_index * INDEX_POSITION + 1 * WALL_CHECK + second_index
 }
 
-get_indices_from_hash :: proc(hash: int) -> (sphere_index, other_index: int, other_is_wall: bool) {
+get_indices_from_hash :: #force_inline proc(hash: int) -> (sphere_index, other_index: int, other_is_wall: bool) {
     sphere_index = hash / INDEX_POSITION
 
     rest_hash := hash - sphere_index * INDEX_POSITION
@@ -402,7 +401,12 @@ get_indices_from_hash :: proc(hash: int) -> (sphere_index, other_index: int, oth
     return
 }
 
-update_contact :: proc(index: int, contacts: ^map[int]Contact, delta, current_time: f64, params: Params) {
+update_contact :: #force_inline proc(
+    index: int,
+    contacts: ^map[int]Contact,
+    delta, current_time: f64,
+    params: Params,
+) {
     using params
 
     old_contact, exists := &contacts[index]
@@ -437,75 +441,72 @@ update_contact_forces :: proc(
     using params
     for map_key, contact in contacts do if contact.time_last_update == current_time {
 
-	slip_velocity, normal: vec3
+	slip_velocity: vec3
+	normal: vec3
 	contact_viscosity_normal, contact_viscosity_tangent: f64
+	sphere := &spheres[contact.particle_id]
 	{ 	// determine what info we need for the sim
 	    if contact.other_is_wall {
 		using contact
-		using sphere := &spheres[particle_id]
-		wall := walls[particle_or_wall_id]
+		using sphere
 		normal = walls[particle_or_wall_id].normal
+		wall := &walls[particle_or_wall_id]
 		slip_velocity = velocity + cross(angular_velocity, -normal * radius) - wall.velocity
 		contact_viscosity_wall_normal := -2. * math.ln(restitution_coeff) *
 		    math.sqrt(mass * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
-		
-		contact_viscosity_wall_tangent: f64 = contact_viscosity_wall_normal * 0.2
-		contact_viscosity_normal = contact_viscosity_wall_normal
-		contact_viscosity_tangent = contact_viscosity_wall_tangent
-	    } else {
-		when false {break} else {
-		    using contact
-		    inspect_contact := contact
-		    sphere := &spheres[particle_id]
-		    other_sphere := spheres[particle_or_wall_id]
-		    sphere_to_sphere_vec := sphere.position - other_sphere.position
-		    sign_x := 1. if sphere_to_sphere_vec.x > 0 else -1
-		    if abs(sphere_to_sphere_vec.x) > length_box.x / 2 && is_periodic {
-			e_x := vec3{1., 0, 0}
-			new_sphere_pos := sphere.position - sign_x * e_x * length_box.x
-			sphere_to_sphere_vec = new_sphere_pos - other_sphere.position
-		    }
-		    normal = normalize(sphere_to_sphere_vec)
-		    slip_velocity = sphere.velocity + cross(sphere.angular_velocity, -sphere.radius * normal) -
-			(other_sphere.velocity + cross(other_sphere.angular_velocity, other_sphere.radius * normal))
 
-		    effective_mass := (sphere.mass * other_sphere.mass) / (sphere.mass + other_sphere.mass)
-		    contact_viscosity_particles_normal := -2. * math.ln(restitution_coeff) *
-			math.sqrt((effective_mass / 2) * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
-		    contact_viscosity_particles_tangent := contact_viscosity_particles_normal * 0.2
-		    contact_viscosity_normal = contact_viscosity_particles_normal
-		    contact_viscosity_tangent = contact_viscosity_particles_tangent
+		contact_viscosity_normal = contact_viscosity_wall_normal
+		contact_viscosity_tangent = contact_viscosity_wall_normal * 0.2
+	    } else {
+		using contact
+		inspect_contact := contact
+		other_sphere := &spheres[particle_or_wall_id]
+		
+		sphere_to_sphere_vec := sphere.position - other_sphere.position
+		sign_x := 1. if sphere_to_sphere_vec.x > 0 else -1.
+		if is_periodic && abs(sphere_to_sphere_vec.x) > length_box.x / 2 {
+		    new_sphere_pos := sphere.position - sign_x * E_x * length_box.x
+		    sphere_to_sphere_vec = new_sphere_pos - other_sphere.position
 		}
+		normal = normalize(sphere_to_sphere_vec)
+		slip_velocity = sphere.velocity + cross(sphere.angular_velocity, -sphere.radius * normal) -
+		    (other_sphere.velocity + cross(other_sphere.angular_velocity, other_sphere.radius * normal))
+
+		effective_mass := (sphere.mass * other_sphere.mass) / (sphere.mass + other_sphere.mass)
+		contact_viscosity_particles_normal := -2. * math.ln(restitution_coeff) *
+		    math.sqrt((effective_mass / 2) * k / (math.ln(restitution_coeff) * math.ln(restitution_coeff) + math.PI * math.PI))
+		
+		contact_viscosity_normal = contact_viscosity_particles_normal
+		contact_viscosity_tangent = contact_viscosity_particles_normal * 0.2
 	    }
 	}
 
 	slip_normal := dot(slip_velocity, normal) * normal
 	slip_tangent := slip_velocity - slip_normal
-	tangent := normalize(slip_tangent)
 
 	using contact
-	delta_tangent := length(tangent_spring)
+	delta_tangent_squared := length_squared(tangent_spring)
 	tangent_spring = tangent_spring - dot(tangent_spring, normal) * normal
-	if delta_tangent > 0 do tangent_spring = delta_tangent * normalize(tangent_spring)
+	if delta_tangent_squared > 0 do tangent_spring = math.sqrt(delta_tangent_squared) * normalize(tangent_spring)
 
 	normal_force := -delta_normal * k * normal - contact_viscosity_normal * slip_normal
-	coulomb_force_length := length(friction_coeff * normal_force)
+	coulomb_force_length_squared := length_squared(friction_coeff * normal_force)
 
 	tangent_force := -k_tangent * tangent_spring - contact_viscosity_tangent * slip_tangent
 
-	if length(tangent_force) < coulomb_force_length {
+	if length_squared(tangent_force) < coulomb_force_length_squared {
 	    // static friction
 	    friction_coeff = mu_static
 	    tangent_spring = tangent_spring + slip_tangent * dt
 	} else {
 	    // dynamic friction (sliding)
+	    coulomb_force_length := math.sqrt(coulomb_force_length_squared)
 	    friction_coeff = mu_dynamic
 	    coulomb_force_length = length(friction_coeff * normal_force)
 	    tangent_spring = -(coulomb_force_length * normalize(tangent_force) + contact_viscosity_tangent * slip_tangent) / k_tangent
 	}
 
 	// apply the forces on the particles
-	sphere := &spheres[particle_id]
 	torque_from_tangent_force := cross(-normal * sphere.radius, tangent_force)
 
 	sphere.force += normal_force
@@ -549,12 +550,16 @@ length :: #force_inline proc(a: vec3) -> f64 {
     return result
 }
 
+length_squared :: #force_inline proc(a: vec3) -> f64 {
+    return dot(a, a)
+}
+
 normalize :: #force_inline proc(a: vec3) -> vec3 {
     result := a / length(a)
     return result
 }
 
-vec3_to_rl :: #force_inline proc(vec: vec3) -> rl.Vector3 {
+vec3_to_rl :: #force_inline proc(vec: vec3) -> rl.Vector3 #no_bounds_check {
     result: rl.Vector3
     for element, id in vec do result[id] = auto_cast element
     return result
