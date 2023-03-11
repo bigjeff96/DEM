@@ -2,11 +2,9 @@ package dem
 
 import "core:fmt"
 import "core:strings"
-import "core:sort"
 import "core:slice"
 import "core:math"
 import "core:math/rand"
-import "core:math/linalg"
 import mu "vendor:microui"
 import rl "vendor:raylib"
 
@@ -75,8 +73,8 @@ visualize_experiment :: proc(experiment: ^Experiment) {
     SetTraceLogLevel(.NONE)
     SetConfigFlags({.VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI, .WINDOW_RESIZABLE})
     InitWindow(1200, 700, "hihi test")
-    SCREEN_WIDTH := GetScreenWidth()
-    SCREEN_HEIGHT := GetScreenHeight()
+    /* SCREEN_WIDTH := GetScreenWidth() */
+    /* SCREEN_HEIGHT := GetScreenHeight() */
     /* ToggleFullscreen() */
     defer CloseWindow()
 
@@ -397,8 +395,8 @@ debug_sim_code :: proc() {
     SetTraceLogLevel(.NONE)
     SetConfigFlags({.VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI, .WINDOW_RESIZABLE})
     InitWindow(1200, 700, "hihi test")
-    SCREEN_WIDTH := GetScreenWidth()
-    SCREEN_HEIGHT := GetScreenHeight()
+    /* SCREEN_WIDTH := GetScreenWidth() */
+    /* SCREEN_HEIGHT := GetScreenHeight() */
     defer CloseWindow()
 
     // raylib camera

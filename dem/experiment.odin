@@ -35,7 +35,7 @@ Params :: struct {
 }
 
 init_params :: proc(radius, density_particle, restitution_coeff, k: f64, length_box: [3]f64) -> Params {
-    mass := (4. / 3.) * math.PI * math.pow(radius, 3) * density_particle
+    /* mass := (4. / 3.) * math.PI * math.pow(radius, 3) * density_particle */
     k_tangent := k / 5.0
     /* dt := 0.05 * math.PI * math.sqrt(mass / k) */
     dt := 1e-6
@@ -90,6 +90,9 @@ read_experiment_results_json :: proc(file: string) -> ^Experiment {
 
 read_experiment :: proc(directory: string, results: ^Experiment) {
     directory_hd, err := os.open(directory)
+    if err != os.ERROR_NONE {
+	os.exit(1)
+    }
     defer os.close(directory_hd)
     file_infos, _ := os.read_dir(directory_hd, 0)
     defer os.file_info_slice_delete(file_infos)
@@ -188,11 +191,11 @@ read_cell_context :: proc(filename: string) -> ^Cell_context {
     os.read_ptr(file, &total_cells, size_of(total_cells))
 
     err: os.Errno
-    for i in 0 ..< total_cells {
+    for _ in 0 ..< total_cells {
 	cell: Cell
 	total_particle_ids: int
 	os.read_ptr(file, &total_particle_ids, size_of(total_particle_ids))
-	for id in 0 ..< total_particle_ids {
+	for _ in 0 ..< total_particle_ids {
 	    particle_id: i32
 	    _, err = os.read_ptr(file, &particle_id, size_of(int))
 	    assert(err == os.ERROR_NONE)

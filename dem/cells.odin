@@ -101,12 +101,12 @@ init_cell_context_PBC :: proc(radius: f64, walls: []Wall) -> (cell_context: ^Cel
     // divide up the box in cells, each one the size of a particle
     using math
     length_box := get_length_box(walls)
-    box_volume: f64 = length_box.x * length_box.y * length_box.z
+    /* box_volume: f64 = length_box.x * length_box.y * length_box.z */
     total_cells_along: [3]i32
     total_cells_along.x = i32(length_box.x / (2 * radius))
     total_cells_along.y = i32(length_box.y / (2 * radius))
     total_cells_along.z = i32(length_box.z / (2 * radius))
-    cell_volume := pow(2 * radius, 3)
+    /* cell_volume := pow(2 * radius, 3) */
 
     cell_context = new(Cell_context)
     cell_context.info.cell_length = 2 * radius

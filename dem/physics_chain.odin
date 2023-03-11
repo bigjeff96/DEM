@@ -2,9 +2,7 @@ package dem
 
 import "core:math/rand"
 import "core:fmt"
-import "core:os"
 import "core:math"
-import "core:slice"
 import "core:math/linalg"
 import "core:intrinsics"
 
@@ -108,8 +106,8 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
 	    shear_torque: vec3
 	    if ok {
 		// this seems to contribute to the bending of the chain
-		viscosity_term := 0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity, auto_cast axis)
-		shear_torque = auto_cast 0.005 * angle * (auto_cast axis) - viscosity_term * axis
+		viscosity_term := 0.00000025 * dot(sphere_a.angular_velocity - sphere_b.angular_velocity,  axis)
+		shear_torque = 0.005 * angle * axis - viscosity_term * axis
 	    } else {
 		// what axis to use in this case ?
 		viscosity : vec3 = 0.00000025 * (sphere_a.angular_velocity - sphere_b.angular_velocity)

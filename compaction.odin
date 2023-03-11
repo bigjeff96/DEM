@@ -6,7 +6,6 @@ import "core:fmt"
 import "core:os"
 import "core:math"
 import "core:time"
-import "core:mem"
 import "core:log"
 import "dem"
 
@@ -153,7 +152,7 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
 	dump_cell_context(cell_context, directory)
     }
 
-    period_shaker_steps := (f64(1. / shaker_frequency) / dt)
+    period_shaker_steps := (1. / shaker_frequency) / dt
     flip_flop := false
     current_shaker_step: f64
     start := time.now()
@@ -161,7 +160,7 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
 
 	if dump_results {
 	    dump_sim_state(
-		    &Simulation_state{spheres = spheres[:], walls = walls, current_time = current_time},
+		&Simulation_state{spheres = spheres[:], walls = walls, current_time = current_time},
 		directory,
 		file_id,
 	    )
@@ -206,12 +205,12 @@ compaction_experiment_and_dump :: proc(shaking_parameter: f64, directory: string
 	output_filename_shaker_starts := strings.to_string(output_filename_shaker_starts_builder)
 
 	output_file_shaker_starts, err := os.open(output_filename_shaker_starts, os.O_RDWR | os.O_CREATE)
+	defer os.close(output_file_shaker_starts)
+	
 	assert(err == os.ERROR_NONE)
-
 	for shaker_start in shaker_starts {
 	    fmt.fprintf(output_file_shaker_starts, "%.10f\n", shaker_start)
 	}
-	os.close(output_file_shaker_starts)
     }
 }
 

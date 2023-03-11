@@ -140,8 +140,8 @@ physics_update :: proc(
     // update the velocities and angular velocities
     for sphere in &spheres {
 	using sphere
-	velocity += force * f64(dt / mass)
-	angular_velocity += torque * f64(dt / moment_of_inertia)
+	velocity += force * (dt / mass)
+	angular_velocity += torque * (dt / moment_of_inertia)
     }
 
     // another half timestep update to finish it off
@@ -267,12 +267,12 @@ physics_update_chain :: proc(
     for sphere, id in &spheres {
 	/* if id == 0 do continue */
 	using sphere
-	velocity += force * f64(dt / mass)
-	angular_velocity += torque * f64(dt / moment_of_inertia)
+	velocity += force * (dt / mass)
+	angular_velocity += torque * (dt / moment_of_inertia)
     }
 
     // another half timestep update to finish it off
-    for sphere, id in &spheres {
+    for sphere, _ in &spheres {
 	using sphere
 	position += velocity * dt / 2
 	if is_periodic {
