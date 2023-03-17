@@ -447,7 +447,7 @@ debug_sim_code :: proc() {
 
     //physics
     total_chains := 1
-    total_particles_per_chain := 15
+    total_particles_per_chain := 30
     radius: f64 = 1e-3
     current_time: f64 = 0
     density_glass_beads: f64 = 2500.0

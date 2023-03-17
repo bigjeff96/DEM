@@ -2,7 +2,7 @@
 
 ODIN=odin
 
-DEBUG="-o:minimal -debug -use-separate-modules"
+DEBUG="-o:minimal -debug -use-separate-modules -dynamic-map-calls"
 FAST="-o:speed"
 
 set -e

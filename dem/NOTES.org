@@ -1,3 +1,7 @@
 * Bugs [2/2]
 - [X] for very bendy fibers (low k), weird "sucking" between sphere 2 and 3 when "drop" of fiber after long swing
 - [X] When fiber starts off flat in the air, when it lands, one side will bend up higher than the other, the side depends on the chain axis for some reason
+
+* Thing to try
+- replace array of particles with linked list with head of list in cell
+  - will make cell struct
