@@ -2,9 +2,9 @@
 
 ODIN=odin
 
-DEBUG="-o:minimal -debug -use-separate-modules -dynamic-map-calls"
-FAST="-o:speed"
+DEBUG="-o:minimal -debug -use-separate-modules -thread-count:8"
+FAST="-o:speed -no-bounds-check"
 
 set -e
-$ODIN run . $FAST -show-timings -define:DEFAULT_TEMP_ALLOCATOR_BACKING_SIZE=20_000_000 
+$ODIN run . $FAST -show-timings -define:DEFAULT_TEMP_ALLOCATOR_BACKING_SIZE=20_000_000
 # ./plot.py 
