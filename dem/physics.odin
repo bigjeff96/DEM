@@ -26,12 +26,9 @@ Sphere :: struct {
 // NOTE: this needs to represent both particle-particle collisions and particle-wall collisions
 Contact :: struct {
     time_last_update:    f64,
-    particle_id:         i32,
-    particle_or_wall_id: i32,
     delta_normal:        f64,
     friction_coeff:      f64,
     tangent_spring:      vec3,
-    other_is_wall:       bool,
 }
 
 Wall :: struct {
@@ -183,7 +180,6 @@ physics_update_chain :: proc(
 
     @(static)
     current_time: f64 = 0
-    context.user_ptr = &current_time
     defer current_time += dt
 
     // clear particles in cells
@@ -416,10 +412,6 @@ update_contact :: #force_inline proc(
         contact.delta_normal = delta
         contact.time_last_update = current_time
         contact.friction_coeff = mu_static
-        sphere_id, other_id, other_is_wall := get_indices_from_hash(index)
-        contact.particle_id = auto_cast sphere_id
-        contact.particle_or_wall_id = auto_cast other_id
-        contact.other_is_wall = other_is_wall
         contacts[index] = contact
         return
     } else {
@@ -440,13 +432,14 @@ update_contact_forces :: proc(
 ) {
     using params
     for map_key, contact in contacts do if contact.time_last_update == current_time {
-
+	
             slip_velocity: vec3
             normal: vec3
             contact_viscosity_normal, contact_viscosity_tangent: f64
-            sphere := &spheres[contact.particle_id]
+	    particle_id, particle_or_wall_id, other_is_wall := get_indices_from_hash(map_key)
+            sphere := &spheres[particle_id]
             {     // determine what info we need for the sim
-                if contact.other_is_wall {
+                if other_is_wall {
                     using contact
                     using sphere
                     normal = walls[particle_or_wall_id].normal
