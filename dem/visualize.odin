@@ -296,7 +296,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
 		mu.label(ctx, "Sim speed: ");int_slider(ctx, &sim_speed, 1, MAX_SIM_SPEED, 1, "%.0f")
 
 		mu.layout_row(ctx, {-1})
-		mu.label(ctx, tprintf("FPS: %v", GetFPS()))
+		mu.label(ctx, tprintf("Delta time in ms: %.2fms", 1000. * GetFrameTime()))
 		mu.label(ctx, tprintf("Total time in secs: %.7f", Total_time))
 		mu.label(ctx, tprintf("Total particles: %d", len(spheres)))
 		mu.label(ctx, tprintf("current frame: %v", experiment_frame))
@@ -658,7 +658,7 @@ debug_sim_code :: proc() {
 		mu.label(ctx, "Sim speed: ");int_slider(ctx, &sim_speed, 1, MAX_SIM_SPEED, 1, "%.0f")
 
 		mu.layout_row(ctx, {-1})
-		mu.label(ctx, tprintf("FPS: %v", GetFPS()))
+		mu.label(ctx, tprintf("Delta time in ms: %.2fms", 1000. * GetFrameTime()))
 		mu.label(ctx, tprintf("Total time in secs: %.7f", current_time))
 		mu.label(ctx, tprintf("Total particles: %d", len(spheres)))
 
