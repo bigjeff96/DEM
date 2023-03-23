@@ -25,10 +25,10 @@ Sphere :: struct {
 
 // NOTE: this needs to represent both particle-particle collisions and particle-wall collisions
 Contact :: struct {
-    time_last_update:    f64,
-    delta_normal:        f64,
-    friction_coeff:      f64,
-    tangent_spring:      vec3,
+    time_last_update: f64,
+    delta_normal:     f64,
+    friction_coeff:   f64,
+    tangent_spring:   vec3,
 }
 
 Wall :: struct {
@@ -96,8 +96,8 @@ physics_update :: proc(
         // in the same cell
         for id_other in cell_of_particle.particle_ids do if i32(sphere_id) < id_other {
                 delta: f64
-            if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
-	    else do delta = measure_delta(&sphere, &spheres[id_other])
+                if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
+                else do delta = measure_delta(&sphere, &spheres[id_other])
                 if delta < 0 {
                     index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
                     update_contact(index, contacts, delta, current_time, params)
@@ -111,7 +111,7 @@ physics_update :: proc(
                 delta: f64
 
                 if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
-		else do delta = measure_delta(&sphere, &spheres[id_other])
+                else do delta = measure_delta(&sphere, &spheres[id_other])
 
                 if delta < 0 {
                     index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
@@ -215,8 +215,8 @@ physics_update_chain :: proc(
         // in the same cell
         for id_other in cell_of_particle.particle_ids do if auto_cast sphere_id < id_other {
                 delta: f64
-            if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
-	    else do delta = measure_delta(&sphere, &spheres[id_other])
+                if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
+                else do delta = measure_delta(&sphere, &spheres[id_other])
 
                 if delta < 0 {
                     index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
@@ -231,7 +231,7 @@ physics_update_chain :: proc(
                 delta: f64
 
                 if is_periodic do delta = measure_delta_spheres_periodic(&sphere, &spheres[id_other], length_box.x)
-		else do delta = measure_delta(&sphere, &spheres[id_other])
+                else do delta = measure_delta(&sphere, &spheres[id_other])
 
                 if delta < 0 {
                     index := generate_hash(sphere_id = auto_cast sphere_id, other_id = id_other, other_is_wall = false)
@@ -432,11 +432,11 @@ update_contact_forces :: proc(
 ) {
     using params
     for map_key, contact in contacts do if contact.time_last_update == current_time {
-	
+
             slip_velocity: vec3
             normal: vec3
             contact_viscosity_normal, contact_viscosity_tangent: f64
-	    particle_id, particle_or_wall_id, other_is_wall := get_indices_from_hash(map_key)
+            particle_id, particle_or_wall_id, other_is_wall := get_indices_from_hash(map_key)
             sphere := &spheres[particle_id]
             {     // determine what info we need for the sim
                 if other_is_wall {

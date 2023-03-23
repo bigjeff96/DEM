@@ -111,7 +111,7 @@ render :: proc(ctx: ^mu.Context) {
             pos := [2]i32{cmd.pos.x, cmd.pos.y}
             cstr := strings.clone_to_cstring(cmd.str, context.temp_allocator)
             /* width := rl.MeasureText(cstr, FONT_SIZE) */
-	    width := ctx.text_width(mu_font(FONT_SIZE),cmd.str)
+            width := ctx.text_width(mu_font(FONT_SIZE), cmd.str)
             rl.DrawText(cstr, pos.x, pos.y - 3, FONT_SIZE, transmute(rl.Color)cmd.color)
             pos.x += width
         case ^mu.Command_Rect:
@@ -145,8 +145,7 @@ u8_slider :: proc(ctx: ^mu.Context, val: ^u8, lo, hi: u8) -> (res: mu.Result_Set
 int_slider :: proc(
     ctx: ^mu.Context,
     value_int: ^int,
-    low,
-    high: int,
+    low, high: int,
     step: int,
     fmt_str: string,
 ) -> (
@@ -163,15 +162,15 @@ int_slider :: proc(
 }
 
 title_seperator :: proc(ctx: ^mu.Context, title: string, color: mu.Color = {0, 0, 0, 255}) {
-    mu.layout_row(ctx, {20, ctx.text_width(mu_font(FONT_SIZE), title) + ctx.style.padding*2, -1})
+    mu.layout_row(ctx, {20, ctx.text_width(mu_font(FONT_SIZE), title) + ctx.style.padding * 2, -1})
     rect := mu.layout_next(ctx)
     rect.h = 5
-    rect.y += ctx.text_height(mu_font(FONT_SIZE))/2 + 5
+    rect.y += ctx.text_height(mu_font(FONT_SIZE)) / 2 + 5
     mu.draw_rect(ctx, rect, color)
     mu.label(ctx, title)
     rect = mu.layout_next(ctx)
     rect.h = 5
-    rect.y += ctx.text_height(mu_font(FONT_SIZE))/2 + 5
+    rect.y += ctx.text_height(mu_font(FONT_SIZE)) / 2 + 5
     mu.draw_rect(ctx, rect, color)
 }
 
@@ -192,7 +191,15 @@ reset_log :: proc() {
 
 rl_text_height :: proc(font: mu.Font) -> i32 {
     using rl
-    return auto_cast MeasureTextEx(GetFontDefault(),strings.clone_to_cstring("Test test yyyy ppp gggQ",context.temp_allocator),FONT_SIZE,1).y-10
+    return(
+        auto_cast MeasureTextEx(
+            GetFontDefault(),
+            strings.clone_to_cstring("Test test yyyy ppp gggQ", context.temp_allocator),
+            FONT_SIZE,
+            1,
+        ).y -
+        10 \
+    )
 }
 
 rl_text_width :: proc(font: mu.Font, text: string) -> (width: i32) {

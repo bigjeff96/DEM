@@ -54,7 +54,7 @@ init_chain :: proc(
         for sphere, id in &chain.spheres {
             using sphere
             if id == 0 do position = position_seed
-	    else do position = chain.spheres[id - 1].position + chain_direction * (2.0 * radius)
+            else do position = chain.spheres[id - 1].position + chain_direction * (2.0 * radius)
         }
 
         is_colliding := false
@@ -89,7 +89,7 @@ chain_internal_forces :: proc(chain: Chain, spheres_in_chain: []Sphere, params: 
         // normal forces in chain
         normal: vec3
         if length_squared(surface_to_surface_vec) > 0. do normal = normalize(surface_to_surface_vec)
-	else do normal = -chain_axis_a
+        else do normal = -chain_axis_a
 
         surface_slip_velocity :=
             sphere_a.velocity +
