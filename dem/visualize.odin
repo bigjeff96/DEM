@@ -85,7 +85,6 @@ visualize_experiment :: proc(experiment: ^Experiment) {
     camera.up = Vector3{0, 1, 0}
     camera.fovy = 45.0
     camera.projection = .PERSPECTIVE
-    SetCameraMode(camera, .FREE)
 
     physics_opts := Physics_opts {
         sim_speed          = 1,
@@ -206,6 +205,10 @@ visualize_experiment :: proc(experiment: ^Experiment) {
             }
         }
 
+	Rect := Rectangle{ 0, 0, 300, auto_cast GetScreenHeight() + 100} 
+	mouse_pos := GetMousePosition()
+	if CheckCollisionPointRec(mouse_pos, Rect) do UpdateCameraPro(&camera, 0,0,0)
+	else do UpdateCamera(&camera, .THIRD_PERSON)
         // Render
         BeginDrawing()
         defer EndDrawing()
@@ -283,7 +286,7 @@ visualize_experiment :: proc(experiment: ^Experiment) {
             opts := mu.Options{.NO_CLOSE, .NO_INTERACT, .NO_RESIZE}
 
             if mu.window(ctx, "Sim options", {0, 0, 300, GetScreenHeight() + 100}, opts) {
-                if !mouse_in_ui(ctx) do UpdateCamera(&camera)
+                /* if !mouse_in_ui(ctx) do UpdateCamera(&camera, .FREE) */
                 using fmt
                 mu.layout_row(ctx, {-1})
                 mu.checkbox(ctx, "Render force", &render_forces)
@@ -399,8 +402,6 @@ debug_sim_code :: proc() {
     SetTraceLogLevel(.NONE)
     SetConfigFlags({.VSYNC_HINT, .MSAA_4X_HINT, .WINDOW_HIGHDPI})
     InitWindow(1200, 700, "hihi test")
-    /* SCREEN_WIDTH := GetScreenWidth() */
-    /* SCREEN_HEIGHT := GetScreenHeight() */
     defer CloseWindow()
 
     // raylib camera
@@ -410,7 +411,6 @@ debug_sim_code :: proc() {
     camera.up = Vector3{0, 1, 0}
     camera.fovy = 45.0
     camera.projection = .PERSPECTIVE
-    SetCameraMode(camera, .FREE)
 
     physics_opts: Physics_opts
     when ODIN_DEBUG {
@@ -499,7 +499,7 @@ debug_sim_code :: proc() {
             using render_state, physics_opts
             if IsKeyPressed(.SPACE) do pause = ~pause
             if IsKeyPressed(.T) do render_transparent = ~render_transparent
-            if IsKeyPressed(.Q) do break
+            /* if IsKeyPressed(.Q) do break */
             if IsKeyPressed(.R) {
                 clear(&chains)
                 for i in 0 ..< total_chains {
@@ -573,6 +573,11 @@ debug_sim_code :: proc() {
             }
         }
 
+	Rect := Rectangle{ 0, 0, 300, auto_cast GetScreenHeight() + 100} 
+	mouse_pos := GetMousePosition()
+	if CheckCollisionPointRec(mouse_pos, Rect) do UpdateCameraPro(&camera, 0,0,0)
+	else do UpdateCamera(&camera, .THIRD_PERSON)
+	
         BeginDrawing()
         defer EndDrawing()
         ClearBackground(RAYWHITE)
@@ -648,7 +653,7 @@ debug_sim_code :: proc() {
             opts := mu.Options{.NO_CLOSE, .NO_INTERACT, .NO_RESIZE}
 
             if mu.window(ctx, "Sim options", {0, 0, 300, GetScreenHeight() + 100}, opts) {
-                if !mouse_in_ui(ctx) do UpdateCamera(&camera)
+                if mouse_in_ui(ctx) do UpdateCameraPro(&camera,0,0,0)
                 using fmt
                 mu.layout_row(ctx, {-1})
                 mu.checkbox(ctx, "Render force", &render_forces)
