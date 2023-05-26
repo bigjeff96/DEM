@@ -1,2 +1,4 @@
 * DEM Simulation in odin
 DEM, or Discreate Element Method, of granular packing in the odin programming language using the raylib engine for visualization
+
+[[dem_sim.png]]
